@@ -145,20 +145,58 @@ namespace BetterShadows
                         }
                     }
                     ImGui.Separator();
+
+                    ImGui.SetNextItemWidth(ImGui.CalcTextSize("F").X * 34);
+                    if (ImGui.BeginCombo("Presets", $"{config.lastSelectedPreset}##NothingToPreviewLol"))
+                    {
+                        for (int index = 0; index < config.cascadePresets.Count; index++)
+                        {
+                            if (ImGui.Selectable(config.cascadePresets[index].Name))
+                            {
+                                config.lastSelectedPreset = config.cascadePresets[index].Name;
+                                config.cascades.CascadeDistance0 = config.cascadePresets[index].CascadeDistance0;
+                                config.cascades.CascadeDistance1 = config.cascadePresets[index].CascadeDistance1;
+                                config.cascades.CascadeDistance2 = config.cascadePresets[index].CascadeDistance2;
+                                config.cascades.CascadeDistance3 = config.cascadePresets[index].CascadeDistance3;
+                            }
+                        }
+                        ImGui.EndCombo();
+                    }
+
                     DrawFloatInput("Slider Max", ref config.SliderMax, 10, 32768);
-                    DrawFloatInput("Cascade Distance 0", ref config.CascadeDistance0, 0.1f, config.CascadeDistance1);
-                    DrawFloatInput("Cascade Distance 1", ref config.CascadeDistance1, config.CascadeDistance0, config.CascadeDistance2);
-                    DrawFloatInput("Cascade Distance 2", ref config.CascadeDistance2, config.CascadeDistance1, config.CascadeDistance3);
-                    DrawFloatInput("Cascade Distance 3", ref config.CascadeDistance3, config.CascadeDistance2, config.SliderMax);
+                    DrawFloatInput("Cascade Distance 0", ref config.cascades.CascadeDistance0, 0.1f, config.cascades.CascadeDistance1);
+                    DrawFloatInput("Cascade Distance 1", ref config.cascades.CascadeDistance1, config.cascades.CascadeDistance0, config.cascades.CascadeDistance2);
+                    DrawFloatInput("Cascade Distance 2", ref config.cascades.CascadeDistance2, config.cascades.CascadeDistance1, config.cascades.CascadeDistance3);
+                    DrawFloatInput("Cascade Distance 3", ref config.cascades.CascadeDistance3, config.cascades.CascadeDistance2, config.SliderMax);
+
+                    ImGui.SetNextItemWidth(ImGui.CalcTextSize("F").X * 34);
+                    ImGui.InputText("Name", ref config.cascades.Name, 32);
+                    ImGui.SameLine();
+                    if (ImGui.Button("Save Preset"))
+                    {
+                        config.cascadePresets.Add(new CascadeConfig(config.cascades));
+                    }
+                    if (ImGui.Button("Delete"))
+                    {
+                        for (int index = 0; index < config.cascadePresets.Count; index++)
+                        {
+                            if (config.cascadePresets[index].Name == config.cascades.Name)
+                            {
+                                config.cascadePresets.RemoveAt(index);
+                                break;
+                            }
+                        }
+                    }
+
                 }
                 ImGui.End();
             }
 
             if (shadowManager != null && config.Enabled) {
-                shadowManager->CascadeDistance0 = config.CascadeDistance0;
-                shadowManager->CascadeDistance1 = config.CascadeDistance1;
-                shadowManager->CascadeDistance2 = config.CascadeDistance2;
-                shadowManager->CascadeDistance3 = config.CascadeDistance3;
+                shadowManager->CascadeDistance0 = config.cascades.CascadeDistance0;
+                shadowManager->CascadeDistance1 = config.cascades.CascadeDistance1;
+                shadowManager->CascadeDistance2 = config.cascades.CascadeDistance2;
+                shadowManager->CascadeDistance3 = config.cascades.CascadeDistance3;
             }
         }
 
