@@ -40,7 +40,9 @@ namespace BetterShadows
         public List<CascadeConfig> cascadePresets = new List<CascadeConfig> {
             new CascadeConfig("Long Distance", 256, 768, 1536, 3072),
             new CascadeConfig("Balanced", 40, 116, 265, 2154),
-            new CascadeConfig("Detailed", 13, 34, 64, 138)
+            new CascadeConfig("Detailed", 13, 34, 64, 138),
+            new CascadeConfig("Seamless", 28, 56, 112, 196),
+            new CascadeConfig("Compromise", 72, 144, 432, 3072)
         };
         public float SliderMax = 4096.0f;
         public bool Enabled = true;
