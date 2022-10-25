@@ -52,6 +52,11 @@ namespace BetterShadows
             commandManager = new PluginCommandManager<Plugin>(this, com);
 
             pluginInterface.Create<Service>();
+
+            if (config.Enabled)
+            {
+                DoEnable();
+            }
         }
 
         private void DrawFloatInput(string text, ref float cvar, float min, float max)
@@ -93,6 +98,33 @@ namespace BetterShadows
             }
         }
 
+        private void DoEnable()
+        {
+            // if regalloc ever changes, these will fail; may be better to hijack the whole function
+            bytes0 = Service.SigScanner.ScanText("F3 0F 11 4F 44 F3 44 0F 5C");
+            bytes1 = Service.SigScanner.ScanText("F3 0F 11 47 48 F3 41 0F 58");
+            bytes2 = Service.SigScanner.ScanText("F3 0F 11 5F 4C 48 8D 9F 18");
+            bytes3 = Service.SigScanner.ScanText("F3 44 0F 11 6F 50 48 8B 05");
+
+            ReadWriteCode(bytes0, ref originalBytes0);
+            ReadWriteCode(bytes1, ref originalBytes1);
+            ReadWriteCode(bytes2, ref originalBytes2);
+            ReadWriteCode(bytes3, ref originalBytes3, 6);
+        }
+
+        private void DoDisable()
+        {
+            RestoreCode(bytes0, originalBytes0);
+            RestoreCode(bytes1, originalBytes1);
+            RestoreCode(bytes2, originalBytes2);
+            RestoreCode(bytes3, originalBytes3, 6);
+
+            bytes0 = IntPtr.Zero;
+            bytes1 = IntPtr.Zero;
+            bytes2 = IntPtr.Zero;
+            bytes3 = IntPtr.Zero;
+        }
+
         public unsafe void OnDraw()
         {
             ShadowManager* shadowManager = ShadowManager.Instance();
@@ -101,47 +133,23 @@ namespace BetterShadows
             {
                 ImGui.Begin("Better Shadows Config");
                 {
-                    if (shadowManager != null)
+                    if (ImGui.Checkbox("Enabled", ref config.Enabled))
                     {
-                        ImGui.Text($"Addr is {((IntPtr)shadowManager).ToString("x")}");
-                        ImGui.Text($"CascadeDistance0 {shadowManager->CascadeDistance0}");
-                        ImGui.Text($"CascadeDistance1 {shadowManager->CascadeDistance1}");
-                        ImGui.Text($"CascadeDistance2 {shadowManager->CascadeDistance2}");
-                        ImGui.Text($"CascadeDistance3 {shadowManager->CascadeDistance3}");
+                        if (config.Enabled)
+                        {
+                            DoEnable();
+                        }
+                        else
+                        {
+                            DoDisable();
+                        }
                     }
+                    ImGui.Separator();
                     DrawFloatInput("Slider Max", ref config.SliderMax, 10, 32768);
                     DrawFloatInput("Cascade Distance 0", ref config.CascadeDistance0, 0.1f, config.CascadeDistance1);
                     DrawFloatInput("Cascade Distance 1", ref config.CascadeDistance1, config.CascadeDistance0, config.CascadeDistance2);
                     DrawFloatInput("Cascade Distance 2", ref config.CascadeDistance2, config.CascadeDistance1, config.CascadeDistance3);
                     DrawFloatInput("Cascade Distance 3", ref config.CascadeDistance3, config.CascadeDistance2, config.SliderMax);
-                    if (ImGui.Checkbox("Enabled", ref config.Enabled))
-                    {
-                        if (config.Enabled)
-                        {
-                            // if regalloc ever changes, these will fail; may be better to hijack the whole function
-                            bytes0 = Service.SigScanner.ScanText("F3 0F 11 4F 44 F3 44 0F 5C");
-                            bytes1 = Service.SigScanner.ScanText("F3 0F 11 47 48 F3 41 0F 58");
-                            bytes2 = Service.SigScanner.ScanText("F3 0F 11 5F 4C 48 8D 9F 18");
-                            bytes3 = Service.SigScanner.ScanText("F3 44 0F 11 6F 50 48 8B 05");
-
-                            ReadWriteCode(bytes0, ref originalBytes0);
-                            ReadWriteCode(bytes1, ref originalBytes1);
-                            ReadWriteCode(bytes2, ref originalBytes2);
-                            ReadWriteCode(bytes3, ref originalBytes3, 6);
-                        }
-                        else
-                        {
-                            RestoreCode(bytes0, originalBytes0);
-                            RestoreCode(bytes1, originalBytes1);
-                            RestoreCode(bytes2, originalBytes2);
-                            RestoreCode(bytes3, originalBytes3, 6);
-
-                            bytes0 = IntPtr.Zero;
-                            bytes1 = IntPtr.Zero;
-                            bytes2 = IntPtr.Zero;
-                            bytes3 = IntPtr.Zero;
-                        }
-                    }
                 }
                 ImGui.End();
             }
@@ -165,6 +173,11 @@ namespace BetterShadows
         protected virtual void Dispose(bool disposing)
         {
             if (!disposing) return;
+
+            if (config.Enabled)
+            {
+                DoDisable();
+            }
 
             this.commandManager.Dispose();
 

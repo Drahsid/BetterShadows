@@ -9,15 +9,15 @@ namespace BetterShadows
         int IPluginConfiguration.Version { get; set; }
 
         #region Saved configuration values
-        public float CascadeDistance0 = 384.0f;
+        public float CascadeDistance0 = 256.0f;
         public float CascadeDistance1 = 768.0f;
         public float CascadeDistance2 = 1536.0f;
         public float CascadeDistance3 = 3072.0f;
         public float SliderMax = 4096.0f;
+        public bool Enabled = false;
         #endregion
 
         public bool ShowConfig = false;
-        public bool Enabled = false;
 
         private readonly DalamudPluginInterface pluginInterface;
 
