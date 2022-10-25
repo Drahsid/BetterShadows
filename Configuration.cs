@@ -14,7 +14,7 @@ namespace BetterShadows
         public float CascadeDistance2 = 1536.0f;
         public float CascadeDistance3 = 3072.0f;
         public float SliderMax = 4096.0f;
-        public bool Enabled = false;
+        public bool Enabled = true;
         #endregion
 
         public bool ShowConfig = false;
