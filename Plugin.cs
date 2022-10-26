@@ -63,6 +63,11 @@ namespace BetterShadows
             {
                 DoEnable();
             }
+
+            if (config.HigherResShadowmap)
+            {
+                DoEnableShadowmap();
+            }
         }
 
         private void DrawFloatInput(string text, ref float cvar, float min, float max)
@@ -133,26 +138,40 @@ namespace BetterShadows
         {
             ShadowManager* shadowManager = ShadowManager.Instance();
 
+            if (shadowManager == null)
+            {
+                PluginLog.Error("shadowManager is null!");
+                return;
+            }
+
             // if regalloc ever changes, these will fail; may be better to hijack the whole function
             Text_ShadowCascade0 = Service.SigScanner.ScanText("F3 0F 11 4F 44 F3 44 0F 5C");
             Text_ShadowCascade1 = Service.SigScanner.ScanText("F3 0F 11 47 48 F3 41 0F 58");
             Text_ShadowCascade2 = Service.SigScanner.ScanText("F3 0F 11 5F 4C 48 8D 9F 18");
             Text_ShadowCascade3 = Service.SigScanner.ScanText("F3 44 0F 11 6F 50 48 8B 05");
 
-            Text_ShadowmapResolution = Service.SigScanner.ScanText("BA ?? ?? ?? ?? EB 0C BA 00 04");
-
             ReadWriteCode(Text_ShadowCascade0, ref OriginalBytes_ShadowCascade0);
             ReadWriteCode(Text_ShadowCascade1, ref OriginalBytes_ShadowCascade1);
             ReadWriteCode(Text_ShadowCascade2, ref OriginalBytes_ShadowCascade2);
             ReadWriteCode(Text_ShadowCascade3, ref OriginalBytes_ShadowCascade3, 6);
+        }
 
-            if (config.HigherResShadowmap)
+        private unsafe void DoEnableShadowmap()
+        {
+            ShadowManager* shadowManager = ShadowManager.Instance();
+
+            if (shadowManager == null)
             {
-                ReadWriteShadowmapCode(Text_ShadowmapResolution, ref OriginalBytes_ShadowmapResolution);
-                if (shadowManager != null)
-                {
-                    shadowManager->Unk_Bitfield |= 1;
-                }
+                PluginLog.Error("shadowManager is null!");
+                return;
+            }
+
+            Text_ShadowmapResolution = Service.SigScanner.ScanText("BA ?? ?? ?? ?? EB 0C BA 00 04");
+
+            ReadWriteShadowmapCode(Text_ShadowmapResolution, ref OriginalBytes_ShadowmapResolution);
+            if (shadowManager != null)
+            {
+                shadowManager->Unk_Bitfield |= 1;
             }
         }
 
@@ -163,15 +182,15 @@ namespace BetterShadows
             RestoreCode(Text_ShadowCascade2, OriginalBytes_ShadowCascade2);
             RestoreCode(Text_ShadowCascade3, OriginalBytes_ShadowCascade3, 6);
 
-            if (config.HigherResShadowmap)
-            {
-                RestoreShadowmapCode(Text_ShadowmapResolution, OriginalBytes_ShadowmapResolution);
-            }
-
             Text_ShadowCascade0 = IntPtr.Zero;
             Text_ShadowCascade1 = IntPtr.Zero;
             Text_ShadowCascade2 = IntPtr.Zero;
             Text_ShadowCascade3 = IntPtr.Zero;
+        }
+
+        private void DoDisableShadowmap()
+        {
+            RestoreShadowmapCode(Text_ShadowmapResolution, OriginalBytes_ShadowmapResolution);
             Text_ShadowmapResolution = IntPtr.Zero;
         }
 
@@ -186,11 +205,11 @@ namespace BetterShadows
             {
                 ImGui.Begin("Better Shadows Config");
                 {
-                    if (ImGui.Checkbox("Enabled", ref config.Enabled))
+                    if (ImGui.Checkbox("Enable Custom Cascade Values", ref config.Enabled))
                     {
                         if (config.Enabled)
                         {
-                            shouldEnable = true;
+                            DoEnable();
                         }
                         else
                         {
@@ -198,21 +217,16 @@ namespace BetterShadows
                         }
                     }
 
-                    if (ImGui.Checkbox("4k shadowmap", ref config.HigherResShadowmap))
+                    if (ImGui.Checkbox("2048p = 4096p shadowmap", ref config.HigherResShadowmap))
                     {
                         if (config.HigherResShadowmap)
                         {
-                            shouldEnable |= true;
+                            DoEnableShadowmap();
                         }
                         else
                         {
-                            RestoreShadowmapCode(Text_ShadowmapResolution, OriginalBytes_ShadowmapResolution);
+                            DoDisableShadowmap();
                         }
-                    }
-
-                    if (shouldEnable)
-                    {
-                        DoEnable();
                     }
 
                     ImGui.Separator();
@@ -326,6 +340,7 @@ namespace BetterShadows
             if (config.Enabled || config.HigherResShadowmap)
             {
                 DoDisable();
+                DoDisableShadowmap();
             }
 
             this.commandManager.Dispose();
