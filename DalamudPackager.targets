@@ -13,6 +13,7 @@
 			ProjectDir="$(ProjectDir)"
 			OutputPath="$(OutputPath)"
 			AssemblyName="$(AssemblyName)"
-			MakeZip="true"/>
+			MakeZip="false"/>
 	</Target>
 </Project>
+

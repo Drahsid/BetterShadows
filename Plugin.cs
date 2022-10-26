@@ -12,6 +12,8 @@ using System;
 using System.Numerics;
 using System.Runtime.InteropServices;
 
+[assembly: System.Reflection.AssemblyVersion("1.0.0.*")]
+
 namespace BetterShadows
 {
     public class Plugin : IDalamudPlugin

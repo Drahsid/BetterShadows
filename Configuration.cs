@@ -8,9 +8,9 @@ namespace BetterShadows
     public class CascadeConfig
     {
         public string Name = "";
-        public float CascadeDistance0 = 256.0f;
-        public float CascadeDistance1 = 768.0f;
-        public float CascadeDistance2 = 1536.0f;
+        public float CascadeDistance0 = 72.0f;
+        public float CascadeDistance1 = 144.0f;
+        public float CascadeDistance2 = 432.0f;
         public float CascadeDistance3 = 3072.0f;
 
         public CascadeConfig() { }
