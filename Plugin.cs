@@ -26,10 +26,12 @@ namespace BetterShadows
         private IntPtr bytes1 = IntPtr.Zero;
         private IntPtr bytes2 = IntPtr.Zero;
         private IntPtr bytes3 = IntPtr.Zero;
+        private IntPtr bytes4 = IntPtr.Zero;
         private byte[] originalBytes0 = new byte[8];
         private byte[] originalBytes1 = new byte[8];
         private byte[] originalBytes2 = new byte[8];
         private byte[] originalBytes3 = new byte[8];
+        private byte[] originalBytes4 = new byte[8];
 
         public string Name => "Better Shadows";
 
@@ -85,6 +87,20 @@ namespace BetterShadows
             }
         }
 
+        private void ReadWriteShadowmapCode(IntPtr addr, ref byte[] originalBytes, int byteCount = 5)
+        {
+            if (addr != IntPtr.Zero)
+            {
+                MemoryHelper.ChangePermission(addr, byteCount, MemoryProtection.ExecuteReadWrite);
+                for (int index = 0; index < byteCount; index++)
+                {
+                    originalBytes[index] = Marshal.ReadByte(addr + index);
+                }
+                Marshal.WriteInt32(addr + 1, 0x00001000);
+                MemoryHelper.ChangePermission(addr, byteCount, MemoryProtection.ExecuteRead);
+            }
+        }
+
         private void RestoreCode(IntPtr addr, byte[] originalBytes, int byteCount = 5)
         {
             if (addr != IntPtr.Zero)
@@ -98,18 +114,42 @@ namespace BetterShadows
             }
         }
 
-        private void DoEnable()
+        private unsafe void RestoreShadowmapCode(IntPtr addr, byte[] originalBytes)
         {
+            ShadowManager* shadowManager = ShadowManager.Instance();
+
+            if (addr != IntPtr.Zero)
+            {
+                RestoreCode(addr, originalBytes);
+                shadowManager->Unk_Bitfield |= 1;
+            }
+        }
+
+        private unsafe void DoEnable()
+        {
+            ShadowManager* shadowManager = ShadowManager.Instance();
+
             // if regalloc ever changes, these will fail; may be better to hijack the whole function
             bytes0 = Service.SigScanner.ScanText("F3 0F 11 4F 44 F3 44 0F 5C");
             bytes1 = Service.SigScanner.ScanText("F3 0F 11 47 48 F3 41 0F 58");
             bytes2 = Service.SigScanner.ScanText("F3 0F 11 5F 4C 48 8D 9F 18");
             bytes3 = Service.SigScanner.ScanText("F3 44 0F 11 6F 50 48 8B 05");
 
+            bytes4 = Service.SigScanner.ScanText("BA ?? ?? ?? ?? EB 0C BA 00 04");
+
             ReadWriteCode(bytes0, ref originalBytes0);
             ReadWriteCode(bytes1, ref originalBytes1);
             ReadWriteCode(bytes2, ref originalBytes2);
             ReadWriteCode(bytes3, ref originalBytes3, 6);
+
+            if (config.HigherResShadowmap)
+            {
+                ReadWriteShadowmapCode(bytes4, ref originalBytes4);
+                if (shadowManager != null)
+                {
+                    shadowManager->Unk_Bitfield |= 1;
+                }
+            }
         }
 
         private void DoDisable()
@@ -119,15 +159,22 @@ namespace BetterShadows
             RestoreCode(bytes2, originalBytes2);
             RestoreCode(bytes3, originalBytes3, 6);
 
+            if (config.HigherResShadowmap)
+            {
+                RestoreShadowmapCode(bytes4, originalBytes4);
+            }
+
             bytes0 = IntPtr.Zero;
             bytes1 = IntPtr.Zero;
             bytes2 = IntPtr.Zero;
             bytes3 = IntPtr.Zero;
+            bytes4 = IntPtr.Zero;
         }
 
         public unsafe void OnDraw()
         {
             ShadowManager* shadowManager = ShadowManager.Instance();
+            bool shouldEnable = false;
 
             if (config.ShowConfig)
             {
@@ -137,13 +184,33 @@ namespace BetterShadows
                     {
                         if (config.Enabled)
                         {
-                            DoEnable();
+                            shouldEnable = true;
                         }
                         else
                         {
                             DoDisable();
                         }
                     }
+
+                    if (config.Enabled) {
+                        if (ImGui.Checkbox("4k shadowmap", ref config.HigherResShadowmap))
+                        {
+                            if (config.HigherResShadowmap)
+                            {
+                                shouldEnable |= true;
+                            }
+                            else
+                            {
+                                RestoreShadowmapCode(bytes4, originalBytes4);
+                            }
+                        }
+                    }
+
+                    if (shouldEnable)
+                    {
+                        DoEnable();
+                    }
+
                     ImGui.Separator();
 
                     ImGui.SetNextItemWidth(ImGui.CalcTextSize("F").X * 34);

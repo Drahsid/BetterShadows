@@ -21,6 +21,7 @@ namespace BetterShadows
         [FieldOffset(0x48)] public float CascadeDistance1;
         [FieldOffset(0x4C)] public float CascadeDistance2;
         [FieldOffset(0x50)] public float CascadeDistance3;
+        [FieldOffset(0x54)] public uint Unk_Bitfield;
 
         // should get this working
         //[StaticAddress("48 8B 05 ?? ?? ?? ?? 48 8B 0C 02", isPointer: true)]

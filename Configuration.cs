@@ -44,6 +44,7 @@ namespace BetterShadows
             new CascadeConfig("Seamless", 28, 56, 112, 196),
             new CascadeConfig("Compromise", 72, 144, 432, 3072)
         };
+        public bool HigherResShadowmap = true;
         public float SliderMax = 4096.0f;
         public bool Enabled = true;
         #endregion
