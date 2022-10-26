@@ -22,16 +22,16 @@ namespace BetterShadows
         private readonly Configuration config;
         private readonly WindowSystem windowSystem;
 
-        private IntPtr bytes0 = IntPtr.Zero;
-        private IntPtr bytes1 = IntPtr.Zero;
-        private IntPtr bytes2 = IntPtr.Zero;
-        private IntPtr bytes3 = IntPtr.Zero;
-        private IntPtr bytes4 = IntPtr.Zero;
-        private byte[] originalBytes0 = new byte[8];
-        private byte[] originalBytes1 = new byte[8];
-        private byte[] originalBytes2 = new byte[8];
-        private byte[] originalBytes3 = new byte[8];
-        private byte[] originalBytes4 = new byte[8];
+        private IntPtr Text_ShadowCascade0 = IntPtr.Zero;
+        private IntPtr Text_ShadowCascade1 = IntPtr.Zero;
+        private IntPtr Text_ShadowCascade2 = IntPtr.Zero;
+        private IntPtr Text_ShadowCascade3 = IntPtr.Zero;
+        private IntPtr Text_ShadowmapResolution = IntPtr.Zero;
+        private byte[] OriginalBytes_ShadowCascade0 = new byte[8];
+        private byte[] OriginalBytes_ShadowCascade1 = new byte[8];
+        private byte[] OriginalBytes_ShadowCascade2 = new byte[8];
+        private byte[] OriginalBytes_ShadowCascade3 = new byte[8];
+        private byte[] OriginalBytes_ShadowmapResolution = new byte[8];
 
         public string Name => "Better Shadows";
 
@@ -130,21 +130,21 @@ namespace BetterShadows
             ShadowManager* shadowManager = ShadowManager.Instance();
 
             // if regalloc ever changes, these will fail; may be better to hijack the whole function
-            bytes0 = Service.SigScanner.ScanText("F3 0F 11 4F 44 F3 44 0F 5C");
-            bytes1 = Service.SigScanner.ScanText("F3 0F 11 47 48 F3 41 0F 58");
-            bytes2 = Service.SigScanner.ScanText("F3 0F 11 5F 4C 48 8D 9F 18");
-            bytes3 = Service.SigScanner.ScanText("F3 44 0F 11 6F 50 48 8B 05");
+            Text_ShadowCascade0 = Service.SigScanner.ScanText("F3 0F 11 4F 44 F3 44 0F 5C");
+            Text_ShadowCascade1 = Service.SigScanner.ScanText("F3 0F 11 47 48 F3 41 0F 58");
+            Text_ShadowCascade2 = Service.SigScanner.ScanText("F3 0F 11 5F 4C 48 8D 9F 18");
+            Text_ShadowCascade3 = Service.SigScanner.ScanText("F3 44 0F 11 6F 50 48 8B 05");
 
-            bytes4 = Service.SigScanner.ScanText("BA ?? ?? ?? ?? EB 0C BA 00 04");
+            Text_ShadowmapResolution = Service.SigScanner.ScanText("BA ?? ?? ?? ?? EB 0C BA 00 04");
 
-            ReadWriteCode(bytes0, ref originalBytes0);
-            ReadWriteCode(bytes1, ref originalBytes1);
-            ReadWriteCode(bytes2, ref originalBytes2);
-            ReadWriteCode(bytes3, ref originalBytes3, 6);
+            ReadWriteCode(Text_ShadowCascade0, ref OriginalBytes_ShadowCascade0);
+            ReadWriteCode(Text_ShadowCascade1, ref OriginalBytes_ShadowCascade1);
+            ReadWriteCode(Text_ShadowCascade2, ref OriginalBytes_ShadowCascade2);
+            ReadWriteCode(Text_ShadowCascade3, ref OriginalBytes_ShadowCascade3, 6);
 
             if (config.HigherResShadowmap)
             {
-                ReadWriteShadowmapCode(bytes4, ref originalBytes4);
+                ReadWriteShadowmapCode(Text_ShadowmapResolution, ref OriginalBytes_ShadowmapResolution);
                 if (shadowManager != null)
                 {
                     shadowManager->Unk_Bitfield |= 1;
@@ -154,21 +154,21 @@ namespace BetterShadows
 
         private void DoDisable()
         {
-            RestoreCode(bytes0, originalBytes0);
-            RestoreCode(bytes1, originalBytes1);
-            RestoreCode(bytes2, originalBytes2);
-            RestoreCode(bytes3, originalBytes3, 6);
+            RestoreCode(Text_ShadowCascade0, OriginalBytes_ShadowCascade0);
+            RestoreCode(Text_ShadowCascade1, OriginalBytes_ShadowCascade1);
+            RestoreCode(Text_ShadowCascade2, OriginalBytes_ShadowCascade2);
+            RestoreCode(Text_ShadowCascade3, OriginalBytes_ShadowCascade3, 6);
 
             if (config.HigherResShadowmap)
             {
-                RestoreShadowmapCode(bytes4, originalBytes4);
+                RestoreShadowmapCode(Text_ShadowmapResolution, OriginalBytes_ShadowmapResolution);
             }
 
-            bytes0 = IntPtr.Zero;
-            bytes1 = IntPtr.Zero;
-            bytes2 = IntPtr.Zero;
-            bytes3 = IntPtr.Zero;
-            bytes4 = IntPtr.Zero;
+            Text_ShadowCascade0 = IntPtr.Zero;
+            Text_ShadowCascade1 = IntPtr.Zero;
+            Text_ShadowCascade2 = IntPtr.Zero;
+            Text_ShadowCascade3 = IntPtr.Zero;
+            Text_ShadowmapResolution = IntPtr.Zero;
         }
 
         public unsafe void OnDraw()
@@ -201,7 +201,7 @@ namespace BetterShadows
                             }
                             else
                             {
-                                RestoreShadowmapCode(bytes4, originalBytes4);
+                                RestoreShadowmapCode(Text_ShadowmapResolution, OriginalBytes_ShadowmapResolution);
                             }
                         }
                     }

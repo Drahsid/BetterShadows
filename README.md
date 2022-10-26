@@ -1,5 +1,5 @@
 # BetterShadows
-Lets you tweak the shadow cascade distance for the shadowmap in ffxiv
+Lets you tweak the shadow cascade distance for the shadowmap in ffxiv. Additionally, lets you change the 2048p shadowmap resolution to 4096p.
 
 To use this plugin, add http://repo.modloader64.com/ffxiv/plugins.json to your list of plugin repositories.
 
