@@ -2,6 +2,7 @@
 using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
+using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
 using Dalamud.Memory;
@@ -68,6 +69,8 @@ namespace BetterShadows
             {
                 DoEnableShadowmap();
             }
+
+            pluginInterface.UiBuilder.OpenConfigUi += ToggleConfig;
         }
 
         private void DrawFloatInput(string text, ref float cvar, float min, float max)
@@ -194,15 +197,48 @@ namespace BetterShadows
             Text_ShadowmapResolution = IntPtr.Zero;
         }
 
+        public void ToggleConfig()
+        {
+            config.ShowConfig = !config.ShowConfig;
+        }
+
         public unsafe void OnDraw()
         {
             ShadowManager* shadowManager = ShadowManager.Instance();
             bool shouldEnable = false;
             float charX = ImGui.CalcTextSize("F").X;
             float charY = ImGui.CalcTextSize("F").Y;
+            float minWindowWidth = 0;
+            float minLeftColWidth = 0;
+            float maxLeftColWidth = 0;
+            string copysavedelete = "Copy Save Delete";
 
             if (config.ShowConfig)
             {
+                for (int index = 0; index < config.cascadePresets.Count; index++)
+                {
+                    if (config.cascadePresets[index].Name.Length > minWindowWidth) {
+                        minLeftColWidth = config.cascadePresets[index].Name.Length;
+                    }
+                }
+
+                minLeftColWidth += copysavedelete.Length + 2;
+                maxLeftColWidth = (float)Math.Floor(ImGui.GetWindowWidth() / charX) - minLeftColWidth;
+
+                // either constrain to window, to the contents of right column
+                if (maxLeftColWidth < 32)
+                {
+                    maxLeftColWidth = 32;
+                }
+
+                minLeftColWidth *= charX;
+                maxLeftColWidth *= charY;
+
+                minWindowWidth = minLeftColWidth + maxLeftColWidth;
+
+                
+                ImGui.SetNextWindowSizeConstraints(new Vector2(minWindowWidth, ImGui.GetWindowHeight()), ImGui.GetMainViewport().Size);
+
                 ImGui.Begin("Better Shadows Config");
                 {
                     if (ImGui.Checkbox("Enable Custom Cascade Values", ref config.Enabled))
@@ -239,25 +275,29 @@ namespace BetterShadows
                         height = height2;
                     }
 
+
                     ImGui.BeginChild("##BSHADOWSCONFCHILD", new Vector2(sxsy.X - 8, height));
                     ImGui.Columns(2, "Presets"); {
+                        float cw = ImGui.GetColumnWidth(0);
+                        if (cw < minLeftColWidth)
+                        {
+                            ImGui.SetColumnWidth(0, minLeftColWidth);
+                        }
+
+                        if (ImGui.GetWindowSize().X - cw < maxLeftColWidth)
+                        {
+
+                            ImGui.SetColumnWidth(0, maxLeftColWidth - minLeftColWidth);
+                        }
+                        cw = ImGui.GetColumnWidth(0);
+
                         for (int index = 0; index < config.cascadePresets.Count; index++)
                         {
-                            ImGui.SetNextItemWidth(charX * (config.cascadePresets[index].Name.Length + 2));
-                            if (ImGui.Button(config.cascadePresets[index].Name))
-                            {
-                                config.lastSelectedPreset = config.cascadePresets[index].Name;
-                                config.cascades.CascadeDistance0 = config.cascadePresets[index].CascadeDistance0;
-                                config.cascades.CascadeDistance1 = config.cascadePresets[index].CascadeDistance1;
-                                config.cascades.CascadeDistance2 = config.cascadePresets[index].CascadeDistance2;
-                                config.cascades.CascadeDistance3 = config.cascadePresets[index].CascadeDistance3;
-                            }
-                            ImGui.SameLine();
-                            ImGui.SetCursorPosX(ImGui.GetColumnWidth() - (charX) * ("COPY SAVE DELETE").Length);
                             if (ImGui.Button($"Copy##BSHADOWS_COPY_{config.cascadePresets[index].Name}_{index}"))
                             {
                                 ImGui.SetClipboardText(JsonConvert.SerializeObject(config.cascadePresets[index]));
                             }
+
                             ImGui.SameLine();
                             if (ImGui.Button($"Save##BSHADOWS_SAVE_{config.cascadePresets[index].Name}_{index}"))
                             {
@@ -267,6 +307,7 @@ namespace BetterShadows
                                 config.cascadePresets[index].CascadeDistance2 = config.cascades.CascadeDistance2;
                                 config.cascadePresets[index].CascadeDistance3 = config.cascades.CascadeDistance3;
                             }
+
                             ImGui.SameLine();
                             if (ImGui.Button($"Delete##BSHADOWS_DELETE_{config.cascadePresets[index].Name}_{index}"))
                             {
@@ -274,14 +315,24 @@ namespace BetterShadows
                                 break;
                             }
 
+                            ImGui.SameLine();
+                            ImGui.SetNextItemWidth(cw - ImGui.GetCursorPosX());
+                            if (ImGui.Selectable(config.cascadePresets[index].Name))
+                            {
+                                config.lastSelectedPreset = config.cascadePresets[index].Name;
+                                config.cascades.Name = config.cascadePresets[index].Name;
+                                config.cascades.CascadeDistance0 = config.cascadePresets[index].CascadeDistance0;
+                                config.cascades.CascadeDistance1 = config.cascadePresets[index].CascadeDistance1;
+                                config.cascades.CascadeDistance2 = config.cascadePresets[index].CascadeDistance2;
+                                config.cascades.CascadeDistance3 = config.cascadePresets[index].CascadeDistance3;
+                            }
+
                             if (index == config.cascadePresets.Count - 1)
                             {
-                                ImGui.SetCursorPosX(ImGui.GetColumnWidth() - (charX * 2) - (charX * ("PASTE").Length));
                                 if (ImGui.Button("Paste"))
                                 {
                                     config.cascadePresets.Add(JsonConvert.DeserializeObject<CascadeConfig>(ImGui.GetClipboardText()));
                                 }
-                                ImGui.SetNextItemWidth(charX * 3);
                                 ImGui.SameLine();
                                 if (ImGui.Button("+"))
                                 {
@@ -289,7 +340,6 @@ namespace BetterShadows
                                 }
                             }
                         }
-
 
                         ImGui.NextColumn();
                         ImGui.SetCursorPosY(ImGui.GetScrollY());
@@ -337,18 +387,20 @@ namespace BetterShadows
         {
             if (!disposing) return;
 
+            pluginInterface.UiBuilder.OpenConfigUi -= ToggleConfig;
+
             if (config.Enabled || config.HigherResShadowmap)
             {
                 DoDisable();
                 DoDisableShadowmap();
             }
 
-            this.commandManager.Dispose();
+            commandManager.Dispose();
 
-            this.pluginInterface.SavePluginConfig(this.config);
+            pluginInterface.SavePluginConfig(this.config);
 
-            this.pluginInterface.UiBuilder.Draw -= this.OnDraw;
-            this.windowSystem.RemoveAllWindows();
+            pluginInterface.UiBuilder.Draw -= this.OnDraw;
+            windowSystem.RemoveAllWindows();
         }
 
         public void Dispose()
