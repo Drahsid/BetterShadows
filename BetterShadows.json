@@ -5,7 +5,7 @@
     "Description": "Directly adjust the distance of each shadow cascade! Now introducing 4k shadowmap!",
     "Punchline": "Take control of your shaodws!",
     "RepoUrl": "https://github.com/Drahsid/BetterShadows",
-    "DalamudApiLevel": 7
+    "DalamudApiLevel": 8
 }
 
 
