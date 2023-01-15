@@ -1,9 +1,9 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.3.32922.545
+VisualStudioVersion = 17.4.33213.308
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetterShadows", "BetterShadows.csproj", "{674695B5-BC57-4452-A3E1-07A45793D107}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BetterShadows", "BetterShadows.csproj", "{A8D8C5B1-5ECE-4359-9CA5-0B035363674C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +11,15 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{674695B5-BC57-4452-A3E1-07A45793D107}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{674695B5-BC57-4452-A3E1-07A45793D107}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{674695B5-BC57-4452-A3E1-07A45793D107}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{674695B5-BC57-4452-A3E1-07A45793D107}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A8D8C5B1-5ECE-4359-9CA5-0B035363674C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A8D8C5B1-5ECE-4359-9CA5-0B035363674C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A8D8C5B1-5ECE-4359-9CA5-0B035363674C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A8D8C5B1-5ECE-4359-9CA5-0B035363674C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {5174CE74-BBEB-429A-A62D-FD61A0A18192}
+		SolutionGuid = {F2E4371C-7A9B-4449-BEE7-80F653B11ED9}
 	EndGlobalSection
 EndGlobal

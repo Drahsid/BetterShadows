@@ -47,18 +47,18 @@ namespace BetterShadows
             clientState = cs;
 
             // Get or create a configuration object
-            config = (Configuration)pluginInterface.GetPluginConfig()
-                          ?? pluginInterface.Create<Configuration>();
+            config = (Configuration)pi.GetPluginConfig() ?? new Configuration();
+            config.Initialize(pi);
 
             // Initialize the UI
             windowSystem = new WindowSystem(typeof(Plugin).AssemblyQualifiedName);
 
-            pluginInterface.UiBuilder.Draw += this.OnDraw;
+            pi.UiBuilder.Draw += this.OnDraw;
 
             // Load all of our commands
             commandManager = new PluginCommandManager<Plugin>(this, com);
 
-            pluginInterface.Create<Service>();
+            pi.Create<Service>();
 
             if (config.Enabled)
             {

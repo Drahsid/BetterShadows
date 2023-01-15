@@ -52,10 +52,9 @@ namespace BetterShadows
         public bool ShowConfig = false;
         public string lastSelectedPreset = "";
 
-        private readonly DalamudPluginInterface pluginInterface;
+        private DalamudPluginInterface pluginInterface;
 
-        public Configuration(DalamudPluginInterface pi)
-        {
+        public void Initialize(DalamudPluginInterface pi) {
             this.pluginInterface = pi;
         }
 
