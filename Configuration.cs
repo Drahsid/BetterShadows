@@ -56,6 +56,16 @@ namespace BetterShadows
 
         public void Initialize(DalamudPluginInterface pi) {
             this.pluginInterface = pi;
+
+            if (Enabled)
+            {
+                CodeManager.DoEnableHacks();
+            }
+
+            if (HigherResShadowmap)
+            {
+                CodeManager.DoEnableShadowmap();
+            }
         }
 
         public void Save()
