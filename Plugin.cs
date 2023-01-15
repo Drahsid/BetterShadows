@@ -46,12 +46,32 @@ namespace BetterShadows
             Globals.Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             Globals.Config.Initialize(PluginInterface);
 
-            pluginInterface.UiBuilder.OpenConfigUi += ToggleConfig;
+            PluginInterface.UiBuilder.Draw += DrawUI;
+            PluginInterface.UiBuilder.OpenConfigUi += ToggleConfig;
+        }
+
+        private unsafe void DrawPost()
+        {
+            ShadowManager* shadowManager = ShadowManager.Instance();
+            if (shadowManager != null && Globals.Config.Enabled)
+            {
+                shadowManager->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
+                shadowManager->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
+                shadowManager->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
+                shadowManager->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+            }
+        }
+
+        private void DrawUI()
+        {
+            WindowSystem.Draw();
+            DrawPost();
         }
 
         public void ToggleConfig()
         {
             Globals.Config.ShowConfig = !Globals.Config.ShowConfig;
+            WindowSystem.GetWindow(ConfigWindow.ConfigWindowName).IsOpen = Globals.Config.ShowConfig;
         }
 
         [Command("/pbshadows")]
