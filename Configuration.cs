@@ -43,7 +43,6 @@ namespace BetterShadows
         public bool Enabled = true;
         #endregion
 
-        public bool ShowConfig = false;
         public string lastSelectedPreset = "";
 
         private DalamudPluginInterface pluginInterface;

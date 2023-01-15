@@ -70,8 +70,7 @@ namespace BetterShadows
 
         public void ToggleConfig()
         {
-            Globals.Config.ShowConfig = !Globals.Config.ShowConfig;
-            WindowSystem.GetWindow(ConfigWindow.ConfigWindowName).IsOpen = Globals.Config.ShowConfig;
+            WindowSystem.GetWindow(ConfigWindow.ConfigWindowName).IsOpen = !WindowSystem.GetWindow(ConfigWindow.ConfigWindowName).IsOpen;
         }
 
         [Command("/pbshadows")]
