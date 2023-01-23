@@ -44,15 +44,16 @@ namespace BetterShadows
                     ImGui.Checkbox($"Defualt##{zoneFriendly}{preset.Key}", ref preset.Value.Default);
 
                     string preview = "";
-                    foreach (CascadeConfig config in Globals.Config.cascadePresets) {
+                    foreach (CascadeConfig config in Globals.Config.shared.cascadePresets) {
                         if (preset.Value.Preset == config.GUID) {
                             preview = config.Name;
+                            break;
                         }
                     }
 
                     if (ImGui.BeginCombo($"Preset##{zoneFriendly}{preset.Key}", preview))
                     {
-                        foreach (CascadeConfig config in Globals.Config.cascadePresets)
+                        foreach (CascadeConfig config in Globals.Config.shared.cascadePresets)
                         {
                             if (ImGui.Selectable(config.Name, preset.Value.Preset == config.GUID))
                             {
@@ -81,6 +82,14 @@ namespace BetterShadows
             float charY = ImGui.CalcTextSize("F").Y;
             bool set_override = false;
 
+            if (ImGui.Button("Copy Presets and Zone Config")) {
+                ImGui.SetClipboardText(Globals.Config.shared.ToBase64());
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Paste Presets and Zone Config")) {
+                Globals.Config.shared = SharableData.FromBase64(ImGui.GetClipboardText());
+            }
+
             ImGui.Checkbox("Edit Override", ref Globals.Config.EditOverride);
 
             if (ImGui.Checkbox("Enable Custom Cascade Values", ref Globals.Config.Enabled))
@@ -91,6 +100,24 @@ namespace BetterShadows
             if (ImGui.Checkbox("2048p = 4096p shadowmap", ref Globals.Config.HigherResShadowmap))
             {
                 Globals.ToggleShadowmap();
+            }
+
+            string preview = "";
+            foreach (CascadeConfig config in Globals.Config.shared.cascadePresets) {
+                if (Globals.Config.shared.defaultPreset == config.GUID) {
+                    preview = config.Name;
+                    break;
+                }
+            }
+
+            if (ImGui.BeginCombo("Default Preset", preview)) {
+                foreach (CascadeConfig config in Globals.Config.shared.cascadePresets) {
+                    if (ImGui.Selectable(config.Name, Globals.Config.shared.defaultPreset == config.GUID)) {
+                        Globals.Config.shared.defaultPreset = config.GUID;
+                        Globals.ReapplyPreset = true;
+                    }
+                }
+                ImGui.EndCombo();
             }
 
             ImGui.Separator();
@@ -115,7 +142,7 @@ namespace BetterShadows
 
             // map config
             ImGui.Text("Zone Preset Config");
-            foreach (var preset in Globals.Config.mapPresets) {
+            foreach (var preset in Globals.Config.shared.mapPresets) {
                 DrawMapPresetTree(preset.Value.Children, new string[] { preset.Key });
             }
 
@@ -126,52 +153,52 @@ namespace BetterShadows
             float height = ImGui.GetCursorPosY();
             ImGui.BeginChild("##BSHADOWSCONFCHILD", new Vector2(sxsy.X - 8, (sxsy.Y - 8) - height));
             ImGui.Text("Presets");
-            for (int index = 0; index < Globals.Config.cascadePresets.Count; index++)
+            for (int index = 0; index < Globals.Config.shared.cascadePresets.Count; index++)
             {
-                if (ImGui.Button($"Copy##BSHADOWS_COPY_{Globals.Config.cascadePresets[index].Name}_{index}"))
+                if (ImGui.Button($"Copy##BSHADOWS_COPY_{Globals.Config.shared.cascadePresets[index].Name}_{index}"))
                 {
-                    ImGui.SetClipboardText(JsonConvert.SerializeObject(Globals.Config.cascadePresets[index]));
+                    ImGui.SetClipboardText(JsonConvert.SerializeObject(Globals.Config.shared.cascadePresets[index]));
                 }
 
                 ImGui.SameLine();
-                if (ImGui.Button($"Save##BSHADOWS_SAVE_{Globals.Config.cascadePresets[index].Name}_{index}"))
+                if (ImGui.Button($"Save##BSHADOWS_SAVE_{Globals.Config.shared.cascadePresets[index].Name}_{index}"))
                 {
-                    Globals.Config.cascadePresets[index].Name = Globals.Config.cascades.Name;
-                    Globals.Config.cascadePresets[index].CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
-                    Globals.Config.cascadePresets[index].CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
-                    Globals.Config.cascadePresets[index].CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
-                    Globals.Config.cascadePresets[index].CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+                    Globals.Config.shared.cascadePresets[index].Name = Globals.Config.cascades.Name;
+                    Globals.Config.shared.cascadePresets[index].CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
+                    Globals.Config.shared.cascadePresets[index].CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
+                    Globals.Config.shared.cascadePresets[index].CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
+                    Globals.Config.shared.cascadePresets[index].CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
                 }
 
                 ImGui.SameLine();
-                if (ImGui.Button($"Delete##BSHADOWS_DELETE_{Globals.Config.cascadePresets[index].Name}_{index}"))
+                if (ImGui.Button($"Delete##BSHADOWS_DELETE_{Globals.Config.shared.cascadePresets[index].Name}_{index}"))
                 {
-                    Globals.Config.cascadePresets.RemoveAt(index);
+                    Globals.Config.shared.cascadePresets.RemoveAt(index);
                     break;
                 }
 
                 ImGui.SameLine();
-                if (ImGui.Selectable(Globals.Config.cascadePresets[index].Name))
+                if (ImGui.Selectable(Globals.Config.shared.cascadePresets[index].Name))
                 {
                     set_override = true;
-                    Globals.Config.lastSelectedPreset = Globals.Config.cascadePresets[index].Name;
-                    Globals.Config.cascades.Name = Globals.Config.cascadePresets[index].Name;
-                    Globals.Config.cascades.CascadeDistance0 = Globals.Config.cascadePresets[index].CascadeDistance0;
-                    Globals.Config.cascades.CascadeDistance1 = Globals.Config.cascadePresets[index].CascadeDistance1;
-                    Globals.Config.cascades.CascadeDistance2 = Globals.Config.cascadePresets[index].CascadeDistance2;
-                    Globals.Config.cascades.CascadeDistance3 = Globals.Config.cascadePresets[index].CascadeDistance3;
+                    Globals.Config.lastSelectedPreset = Globals.Config.shared.cascadePresets[index].Name;
+                    Globals.Config.cascades.Name = Globals.Config.shared.cascadePresets[index].Name;
+                    Globals.Config.cascades.CascadeDistance0 = Globals.Config.shared.cascadePresets[index].CascadeDistance0;
+                    Globals.Config.cascades.CascadeDistance1 = Globals.Config.shared.cascadePresets[index].CascadeDistance1;
+                    Globals.Config.cascades.CascadeDistance2 = Globals.Config.shared.cascadePresets[index].CascadeDistance2;
+                    Globals.Config.cascades.CascadeDistance3 = Globals.Config.shared.cascadePresets[index].CascadeDistance3;
                 }
 
-                if (index == Globals.Config.cascadePresets.Count - 1)
+                if (index == Globals.Config.shared.cascadePresets.Count - 1)
                 {
                     if (ImGui.Button("Paste"))
                     {
-                        Globals.Config.cascadePresets.Add(JsonConvert.DeserializeObject<CascadeConfig>(ImGui.GetClipboardText()));
+                        Globals.Config.shared.cascadePresets.Add(JsonConvert.DeserializeObject<CascadeConfig>(ImGui.GetClipboardText()));
                     }
                     ImGui.SameLine();
                     if (ImGui.Button("+"))
                     {
-                        Globals.Config.cascadePresets.Add(new CascadeConfig(Globals.Config.cascades));
+                        Globals.Config.shared.cascadePresets.Add(new CascadeConfig(Globals.Config.cascades));
                     }
                 }
             }

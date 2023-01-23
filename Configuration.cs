@@ -1,10 +1,14 @@
 ﻿using Dalamud.Configuration;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Text;
 
 namespace BetterShadows
 {
@@ -73,6 +77,24 @@ namespace BetterShadows
         }
     }
 
+    public class SharableData {
+        public Guid? defaultPreset = null;
+        public List<CascadeConfig> cascadePresets = null;
+        public Dictionary<string, ConfigTreeNode> mapPresets;
+
+        public string ToBase64() {
+            string json = JsonConvert.SerializeObject(this);
+            byte[] bytes = Encoding.Default.GetBytes(json);
+            return Convert.ToBase64String(bytes);
+        }
+
+        public static SharableData FromBase64(string base64Text) {
+            byte[] bytes = Convert.FromBase64String(base64Text);
+            string json = Encoding.Default.GetString(bytes);
+            return JsonConvert.DeserializeObject<SharableData>(json);
+        }
+    }
+
 
     public class Configuration : IPluginConfiguration
     {
@@ -80,9 +102,10 @@ namespace BetterShadows
 
         #region Saved configuration values
         public CascadeConfig cascades = new CascadeConfig();
-        public Guid? defaultPreset = null;
-        public List<CascadeConfig> cascadePresets = null;
-        public Dictionary<string, ConfigTreeNode> mapPresets;
+        public SharableData shared;
+
+        // this is just here for config upgrades
+        [Obsolete] public List<CascadeConfig> cascadePresets = null;
 
         public bool HigherResShadowmap = true;
         public float SliderMax = 4096.0f;
@@ -98,16 +121,16 @@ namespace BetterShadows
         public Guid GetZonePresetGUID(string[] keys) {
             string key = keys[0];
 
-            if (!mapPresets.ContainsKey(key)) {
-                var newNode = new ConfigTreeNode(key, defaultPreset, true);
-                mapPresets.Add(key, newNode);
+            if (!shared.mapPresets.ContainsKey(key)) {
+                var newNode = new ConfigTreeNode(key, shared.defaultPreset, true);
+                shared.mapPresets.Add(key, newNode);
             }
             if (keys[1] == "") {
                 // (Guid)(node.Default ? defaultPreset : node.Preset);
-                return (Guid)(mapPresets[key].Default ? defaultPreset : mapPresets[key].Preset);
+                return (Guid)(shared.mapPresets[key].Default ? shared.defaultPreset : shared.mapPresets[key].Preset);
             }
 
-            return GetZonePresetGUID_(mapPresets[key], keys.Skip(1).ToArray(), (Guid)mapPresets[key].Preset);
+            return GetZonePresetGUID_(shared.mapPresets[key], keys.Skip(1).ToArray(), (Guid)shared.mapPresets[key].Preset);
         }
 
         private Guid GetZonePresetGUID_(ConfigTreeNode node, string[] keys, Guid parent) {
@@ -116,7 +139,7 @@ namespace BetterShadows
                 return (Guid)(node.Default ? parent : node.Preset);
             }
             if (!node.Children.ContainsKey(keys[0])) {
-                var newNode = new ConfigTreeNode(keys[0], defaultPreset, true);
+                var newNode = new ConfigTreeNode(keys[0], shared.defaultPreset, true);
                 node.Children.Add(keys[0], newNode);
             }
 
@@ -128,16 +151,16 @@ namespace BetterShadows
         }
 
         public void FixupZoneDefaultPresets() {
-            foreach (string key in mapPresets.Keys) {
-                if (mapPresets[key].Default) {
-                    mapPresets[key].Preset = defaultPreset;
+            foreach (string key in shared.mapPresets.Keys) {
+                if (shared.mapPresets[key].Default) {
+                    shared.mapPresets[key].Preset = shared.defaultPreset;
                 }
-                mapPresets[key].RecurseChildrenAndSetDefaultPreset(mapPresets[key].Preset);
+                shared.mapPresets[key].RecurseChildrenAndSetDefaultPreset(shared.mapPresets[key].Preset);
             }
         }
 
         public void ApplyPresetByGuid(Guid presetGuid) {
-            foreach (CascadeConfig cascadeConfig in cascadePresets) {
+            foreach (CascadeConfig cascadeConfig in shared.cascadePresets) {
                 if (cascadeConfig.GUID == presetGuid) {
                     cascades.CascadeDistance0 = cascadeConfig.CascadeDistance0;
                     cascades.CascadeDistance1 = cascadeConfig.CascadeDistance1;
@@ -153,9 +176,19 @@ namespace BetterShadows
         public void Initialize(DalamudPluginInterface pi) {
             this.pluginInterface = pi;
 
-            if (cascadePresets == null)
-            {
-                cascadePresets = new List<CascadeConfig> {
+            if (shared == null) {
+                shared = new SharableData();
+                if (cascadePresets != null) {
+                    shared.cascadePresets = new List<CascadeConfig>();
+                    foreach (CascadeConfig c in cascadePresets) {
+                        shared.cascadePresets.Add(c);
+                    }
+                    cascadePresets = null;
+                }
+            }
+
+            if (shared.cascadePresets == null) {
+                shared.cascadePresets = new List<CascadeConfig> {
                     new CascadeConfig("Long Distance", 256, 768, 1536, 3072),
                     new CascadeConfig("Balanced", 40, 116, 265, 2154),
                     new CascadeConfig("Detailed", 13, 34, 64, 138),
@@ -164,35 +197,32 @@ namespace BetterShadows
                 };
             }
 
-            foreach (CascadeConfig c in cascadePresets) {
+            foreach (CascadeConfig c in shared.cascadePresets) {
                 if (c.GUID is null || c.GUID == Guid.Empty) {
                     c.GUID = Guid.NewGuid();
                 }
             }
 
-            if (defaultPreset is null) {
-                defaultPreset = cascadePresets[3].GUID;
+            if (shared.defaultPreset is null) {
+                shared.defaultPreset = shared.cascadePresets[3].GUID;
             }
 
-            if (mapPresets is null) {
-                mapPresets = new Dictionary<string, ConfigTreeNode>();
+            if (shared.mapPresets is null) {
+                shared.mapPresets = new Dictionary<string, ConfigTreeNode>();
             }
 
             Save();
 
-            if (Enabled)
-            {
+            if (Enabled) {
                 CodeManager.DoEnableHacks();
             }
 
-            if (HigherResShadowmap)
-            {
+            if (HigherResShadowmap) {
                 CodeManager.DoEnableShadowmap();
             }
         }
 
-        public void Save()
-        {
+        public void Save() {
             this.pluginInterface.SavePluginConfig(this);
         }
     }
