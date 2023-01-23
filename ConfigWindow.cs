@@ -18,7 +18,7 @@ namespace BetterShadows
         public ConfigWindow(Plugin plugin) : base(ConfigWindowName) {
         }
 
-        private void DrawFloatInput(string text, ref float cvar, float min, float max)
+        private bool DrawFloatInput(string text, ref float cvar, float min, float max)
         {
             float input_width = ImGui.CalcTextSize("F").X * 10;
 
@@ -26,36 +26,71 @@ namespace BetterShadows
             ImGui.SliderFloat(text, ref cvar, min, max);
             ImGui.SameLine();
             ImGui.SetNextItemWidth(input_width);
-            ImGui.InputFloat($"##{text}", ref cvar);
+            return ImGui.InputFloat($"##{text}", ref cvar);
         }
+
+        private void DrawMapPresetTree(Dictionary<string, ConfigTreeNode> presets, string[] zone)
+        {
+            foreach (var preset in presets)
+            {
+                string[] newZone = new string[zone.Length + 1];
+                string zoneFriendly = "";
+                Array.Copy(zone, newZone, zone.Length);
+                newZone[newZone.Length - 1] = preset.Key;
+                zoneFriendly = String.Join("/", newZone);
+                if (ImGui.TreeNode($"{preset.Key}##{zoneFriendly}"))
+                {
+                    ImGui.TextDisabled(zoneFriendly);
+                    ImGui.Checkbox($"Defualt##{zoneFriendly}{preset.Key}", ref preset.Value.Default);
+
+                    string preview = "";
+                    foreach (CascadeConfig config in Globals.Config.cascadePresets) {
+                        if (preset.Value.Preset == config.GUID) {
+                            preview = config.Name;
+                        }
+                    }
+
+                    if (ImGui.BeginCombo($"Preset##{zoneFriendly}{preset.Key}", preview))
+                    {
+                        foreach (CascadeConfig config in Globals.Config.cascadePresets)
+                        {
+                            if (ImGui.Selectable(config.Name, preset.Value.Preset == config.GUID))
+                            {
+                                preset.Value.Default = false;
+                                preset.Value.Preset = config.GUID;
+                                Globals.ReapplyPreset = true;
+                            }
+                        }
+                        ImGui.EndCombo();
+                    }
+
+                    if (preset.Value.Children != null && preset.Value.Children.Count > 0)
+                    {
+                        DrawMapPresetTree(preset.Value.Children, newZone);
+                    }
+                    ImGui.TreePop();
+                }
+            }
+        }
+
+
 
         public override void Draw()
         {
             float charX = ImGui.CalcTextSize("F").X;
             float charY = ImGui.CalcTextSize("F").Y;
+            bool set_override = false;
+
+            ImGui.Checkbox("Edit Override", ref Globals.Config.EditOverride);
 
             if (ImGui.Checkbox("Enable Custom Cascade Values", ref Globals.Config.Enabled))
             {
-                if (Globals.Config.Enabled)
-                {
-                    CodeManager.DoEnableHacks();
-                }
-                else
-                {
-                    CodeManager.DoDisableHacks();
-                }
+                Globals.ToggleHacks();
             }
 
             if (ImGui.Checkbox("2048p = 4096p shadowmap", ref Globals.Config.HigherResShadowmap))
             {
-                if (Globals.Config.HigherResShadowmap)
-                {
-                    CodeManager.DoEnableShadowmap();
-                }
-                else
-                {
-                    CodeManager.DoDisableShadowmap();
-                }
+                Globals.ToggleShadowmap();
             }
 
             ImGui.Separator();
@@ -63,10 +98,10 @@ namespace BetterShadows
             // cascade config
             ImGui.Text("Config: " + Globals.Config.cascades.Name);
             DrawFloatInput("Slider Max", ref Globals.Config.SliderMax, 10, 32768);
-            DrawFloatInput("Cascade Distance 0", ref Globals.Config.cascades.CascadeDistance0, 0.1f, Globals.Config.cascades.CascadeDistance1);
-            DrawFloatInput("Cascade Distance 1", ref Globals.Config.cascades.CascadeDistance1, Globals.Config.cascades.CascadeDistance0, Globals.Config.cascades.CascadeDistance2);
-            DrawFloatInput("Cascade Distance 2", ref Globals.Config.cascades.CascadeDistance2, Globals.Config.cascades.CascadeDistance1, Globals.Config.cascades.CascadeDistance3);
-            DrawFloatInput("Cascade Distance 3", ref Globals.Config.cascades.CascadeDistance3, Globals.Config.cascades.CascadeDistance2, Globals.Config.SliderMax);
+            set_override |= DrawFloatInput("Cascade Distance 0", ref Globals.Config.cascades.CascadeDistance0, 0.1f, Globals.Config.cascades.CascadeDistance1);
+            set_override |= DrawFloatInput("Cascade Distance 1", ref Globals.Config.cascades.CascadeDistance1, Globals.Config.cascades.CascadeDistance0, Globals.Config.cascades.CascadeDistance2);
+            set_override |= DrawFloatInput("Cascade Distance 2", ref Globals.Config.cascades.CascadeDistance2, Globals.Config.cascades.CascadeDistance1, Globals.Config.cascades.CascadeDistance3);
+            set_override |= DrawFloatInput("Cascade Distance 3", ref Globals.Config.cascades.CascadeDistance3, Globals.Config.cascades.CascadeDistance2, Globals.Config.SliderMax);
 
             ImGui.SetNextItemWidth(charX * 34);
             ImGui.InputText("Name", ref Globals.Config.cascades.Name, 32);
@@ -76,6 +111,15 @@ namespace BetterShadows
                 ImGui.SetClipboardText(JsonConvert.SerializeObject(Globals.Config.cascades));
             }
 
+            ImGui.Separator();
+
+            // map config
+            ImGui.Text("Zone Preset Config");
+            foreach (var preset in Globals.Config.mapPresets) {
+                DrawMapPresetTree(preset.Value.Children, new string[] { preset.Key });
+            }
+
+            // preset list
             ImGui.Separator();
 
             Vector2 sxsy = ImGui.GetWindowSize();
@@ -109,6 +153,7 @@ namespace BetterShadows
                 ImGui.SameLine();
                 if (ImGui.Selectable(Globals.Config.cascadePresets[index].Name))
                 {
+                    set_override = true;
                     Globals.Config.lastSelectedPreset = Globals.Config.cascadePresets[index].Name;
                     Globals.Config.cascades.Name = Globals.Config.cascadePresets[index].Name;
                     Globals.Config.cascades.CascadeDistance0 = Globals.Config.cascadePresets[index].CascadeDistance0;

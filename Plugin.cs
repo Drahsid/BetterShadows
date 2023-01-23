@@ -46,6 +46,8 @@ namespace BetterShadows
             Globals.Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             Globals.Config.Initialize(PluginInterface);
 
+            Globals.DtrDisplay = new DtrDisplay();
+
             PluginInterface.UiBuilder.Draw += DrawUI;
             PluginInterface.UiBuilder.OpenConfigUi += ToggleConfig;
         }
@@ -53,8 +55,38 @@ namespace BetterShadows
         private unsafe void DrawPost()
         {
             ShadowManager* shadowManager = ShadowManager.Instance();
-            if (shadowManager != null && Globals.Config.Enabled)
-            {
+
+            if ((Globals.DtrDisplay.locationChanged || Globals.ReapplyPreset) && !Globals.Config.EditOverride) {
+                string continent = "";
+                string territory = "";
+                string region = "";
+                string subArea = "";
+
+                Globals.DtrDisplay.locationChanged = false;
+
+                if (Globals.DtrDisplay.currentContinent != null)
+                {
+                    continent = Globals.DtrDisplay.currentContinent.Name.RawString;
+                }
+
+                if (Globals.DtrDisplay.currentTerritory != null) {
+                    territory = Globals.DtrDisplay.currentTerritory.Name.RawString;
+                }
+
+                if (Globals.DtrDisplay.currentRegion != null) {
+                    region = Globals.DtrDisplay.currentRegion.Name.RawString;
+                }
+
+                if (Globals.DtrDisplay.currentSubArea != null) {
+                    subArea = Globals.DtrDisplay.currentSubArea.Name.RawString;
+                }
+
+                Globals.Config.ApplyPresetByGuid(Globals.Config.GetZonePresetGUID(new string[] { continent, territory, region, subArea }));
+            }
+
+            Globals.Config.FixupZoneDefaultPresets();
+
+            if (shadowManager != null && Globals.Config.Enabled) {
                 shadowManager->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
                 shadowManager->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
                 shadowManager->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
@@ -80,6 +112,15 @@ namespace BetterShadows
             ToggleConfig();
         }
 
+        [Command("/tbshadows")]
+        [HelpMessage("Toggle the functionality")]
+        public void Command_togglebshadows(string command, string args)
+        {
+            Globals.Config.EnabledOverall = !Globals.Config.EnabledOverall;
+            Globals.ToggleHacks();
+            Globals.ToggleShadowmap();
+        }
+
         #region IDisposable Support
         protected virtual void Dispose(bool disposing)
         {
@@ -94,6 +135,8 @@ namespace BetterShadows
             }
 
             CommandManager.Dispose();
+
+            Globals.DtrDisplay.Dispose();
 
             PluginInterface.SavePluginConfig(Globals.Config);
 
