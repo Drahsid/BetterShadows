@@ -1,13 +1,9 @@
 ﻿using Dalamud.Configuration;
-using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Plugin;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
-using System.Runtime.Serialization.Formatters.Binary;
 using System.Text;
 
 namespace BetterShadows

@@ -2,18 +2,11 @@
 using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
-using Dalamud.Interface;
 using Dalamud.Interface.Windowing;
-using Dalamud.Logging;
-using Dalamud.Memory;
 using Dalamud.Plugin;
-using ImGuiNET;
-using Newtonsoft.Json;
 using System;
-using System.Numerics;
-using System.Runtime.InteropServices;
 
-[assembly: System.Reflection.AssemblyVersion("1.0.0.*")]
+[assembly: System.Reflection.AssemblyVersion("1.0.*")]
 
 namespace BetterShadows
 {
@@ -24,7 +17,7 @@ namespace BetterShadows
         private ClientState ClientState;
         private PluginCommandManager<Plugin> CommandManager;
         private WindowSystem WindowSystem;
-
+        
         public string Name => "Better Shadows";
 
         public Plugin(DalamudPluginInterface pluginInterface, CommandManager commandManager, ChatGui chat, ClientState clientState)

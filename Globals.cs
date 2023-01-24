@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BetterShadows
+﻿namespace BetterShadows
 {
     internal class Globals
     {
@@ -13,7 +7,7 @@ namespace BetterShadows
         public static bool ReapplyPreset = false;
 
         public static void ToggleHacks() {
-            if (Globals.Config.Enabled && Globals.Config.EnabledOverall) {
+            if (Config.Enabled && Config.EnabledOverall) {
                 CodeManager.DoEnableHacks();
             }
             else {
@@ -22,7 +16,7 @@ namespace BetterShadows
         }
 
         public static void ToggleShadowmap() {
-            if (Globals.Config.HigherResShadowmap && Globals.Config.EnabledOverall) {
+            if (Config.HigherResShadowmap && Config.EnabledOverall) {
                 CodeManager.DoEnableShadowmap();
             }
             else {
