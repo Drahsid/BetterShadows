@@ -5,8 +5,10 @@ using Dalamud.Game.Gui;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 
-[assembly: System.Reflection.AssemblyVersion("1.0.*")]
+[assembly: System.Reflection.AssemblyVersion("1.1.0")]
 
 namespace BetterShadows
 {
@@ -89,6 +91,7 @@ namespace BetterShadows
 
         private void DrawUI()
         {
+            Globals.Config.shared.mapPresets = SortConfigDictionaryAndChildren(Globals.Config.shared.mapPresets);
             WindowSystem.Draw();
             DrawPost();
         }
@@ -96,6 +99,17 @@ namespace BetterShadows
         public void ToggleConfig()
         {
             WindowSystem.GetWindow(ConfigWindow.ConfigWindowName).IsOpen = !WindowSystem.GetWindow(ConfigWindow.ConfigWindowName).IsOpen;
+        }
+
+        private Dictionary<string, ConfigTreeNode> SortConfigDictionaryAndChildren(Dictionary<string, ConfigTreeNode> dictionary) {
+            Dictionary<string, ConfigTreeNode> result = dictionary.OrderBy(entry => entry.Key).ToDictionary(entry => entry.Key, entry => entry.Value);
+            foreach (var entry in result.Values) {
+                if (entry.Children != null) {
+                    entry.Children = SortConfigDictionaryAndChildren(entry.Children);
+                }
+            }
+
+            return result;
         }
 
         [Command("/pbshadows")]

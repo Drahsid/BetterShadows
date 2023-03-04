@@ -1,23 +1,8 @@
 # BetterShadows
 Lets you tweak the shadow cascade distance for the shadowmap in ffxiv. Additionally, lets you change the 2048p shadowmap resolution to 4096p.
 
-To use this plugin, add http://repo.modloader64.com/ffxiv/plugins.json to your list of plugin repositories.
+To use this plugin, install it from the official dalamud repository, or add http://repo.modloader64.com/ffxiv/plugins.json to your list of plugin repositories.
 
-# Presets
-You can save presets based on values you like for certain scenarios. The plugin ships with a couple default presets:
-
-## Long Distance
-This preset balances the shadow quality over a very long distance. This basically only looks good on Mare Lamentorum.
-
-## Balanced
-Similar to how the game treats many areas. Fairly detailed close up, not very detailed in the distance.
-
-## Detailed
-Sacrifices shadow distance for shadow quality. Shadows will notably fade out, however, the ones you do see will look sharp.
-
-## Seamless
-Similar to detailed, however extends the range just enough so that the cascades appear seamless.
-
-## Compromise
-Compromises some close up detail, and further away detail so that shadows appear somewhat detailed, and at a distance.
+## Default Preset and Preset Inheritance
+To simplify the usage of presets, and presets in zones, and subzones, I made presets inherit from their parent. If a preset has no parent, it will instead use the preset that you set as the default preset.
 

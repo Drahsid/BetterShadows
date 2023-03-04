@@ -108,6 +108,8 @@ namespace BetterShadows
         public bool Enabled = true;
         public bool EnabledOverall = true;
         public bool EditOverride = false;
+        public bool ZoneConfigBeforePreset = false;
+        public bool HideTooltips = false;
         #endregion
 
         public string lastSelectedPreset = "";
