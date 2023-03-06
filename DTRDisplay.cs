@@ -5,6 +5,8 @@ using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
 
+namespace BetterShadows;
+
 // referenced from WAIA
 
 [StructLayout(LayoutKind.Explicit, Size = 76)]
@@ -18,81 +20,78 @@ public readonly struct TerritoryInfoStruct {
     public PlaceName? SubArea => Service.DataManager.GetExcelSheet<PlaceName>()!.GetRow(SubAreaID);
 }
 
-namespace BetterShadows
+public unsafe class DtrDisplay : IDisposable
 {
-    public unsafe class DtrDisplay : IDisposable
+    public PlaceName? currentContinent;
+    public PlaceName? currentTerritory;
+    public PlaceName? currentRegion;
+    public PlaceName? currentSubArea;
+
+    private uint lastTerritory;
+    private uint lastRegion;
+    private uint lastSubArea;
+
+    public bool locationChanged;
+
+    [Signature("8B 2D ?? ?? ?? ?? 41 BF", ScanType = ScanType.StaticAddress)]
+    private readonly TerritoryInfoStruct* territoryInfo = null!;
+
+    public DtrDisplay()
     {
-        public PlaceName? currentContinent;
-        public PlaceName? currentTerritory;
-        public PlaceName? currentRegion;
-        public PlaceName? currentSubArea;
+        SignatureHelper.Initialise(this);
 
-        private uint lastTerritory;
-        private uint lastRegion;
-        private uint lastSubArea;
+        Service.Framework.Update += OnFrameworkUpdate;
+        Service.ClientState.TerritoryChanged += OnZoneChange;
+    }
 
-        public bool locationChanged;
+    public void Dispose()
+    {
+        Service.Framework.Update -= OnFrameworkUpdate;
+        Service.ClientState.TerritoryChanged -= OnZoneChange;
+    }
 
-        [Signature("8B 2D ?? ?? ?? ?? 41 BF", ScanType = ScanType.StaticAddress)]
-        private readonly TerritoryInfoStruct* territoryInfo = null!;
+    private void OnFrameworkUpdate(Framework framework)
+    {
+        if (Service.ClientState.LocalPlayer is null) return;
 
-        public DtrDisplay()
+        UpdateRegion();
+        UpdateSubArea();
+        UpdateTerritory();
+    }
+
+    private void OnZoneChange(object? sender, ushort e) => locationChanged = true;
+
+    private void UpdateTerritory()
+    {
+        if (lastTerritory != Service.ClientState.TerritoryType)
         {
-            SignatureHelper.Initialise(this);
+            lastTerritory = Service.ClientState.TerritoryType;
+            var territory = Service.DataManager.GetExcelSheet<TerritoryType>()!
+                .GetRow(Service.ClientState.TerritoryType);
 
-            Service.Framework.Update += OnFrameworkUpdate;
-            Service.ClientState.TerritoryChanged += OnZoneChange;
+            currentTerritory = territory?.PlaceName.Value;
+            currentContinent = territory?.PlaceNameRegion.Value;
+            locationChanged = true;
         }
+    }
 
-        public void Dispose()
+    private void UpdateSubArea()
+    {
+        if (lastSubArea != territoryInfo->SubAreaID)
         {
-            Service.Framework.Update -= OnFrameworkUpdate;
-            Service.ClientState.TerritoryChanged -= OnZoneChange;
+            lastSubArea = territoryInfo->SubAreaID;
+            currentSubArea = territoryInfo->SubArea;
+            locationChanged = true;
         }
+    }
 
-        private void OnFrameworkUpdate(Framework framework)
+    private void UpdateRegion()
+    {
+        if (lastRegion != territoryInfo->RegionID)
         {
-            if (Service.ClientState.LocalPlayer is null) return;
-
-            UpdateRegion();
-            UpdateSubArea();
-            UpdateTerritory();
-        }
-
-        private void OnZoneChange(object? sender, ushort e) => locationChanged = true;
-
-        private void UpdateTerritory()
-        {
-            if (lastTerritory != Service.ClientState.TerritoryType)
-            {
-                lastTerritory = Service.ClientState.TerritoryType;
-                var territory = Service.DataManager.GetExcelSheet<TerritoryType>()!
-                    .GetRow(Service.ClientState.TerritoryType);
-
-                currentTerritory = territory?.PlaceName.Value;
-                currentContinent = territory?.PlaceNameRegion.Value;
-                locationChanged = true;
-            }
-        }
-
-        private void UpdateSubArea()
-        {
-            if (lastSubArea != territoryInfo->SubAreaID)
-            {
-                lastSubArea = territoryInfo->SubAreaID;
-                currentSubArea = territoryInfo->SubArea;
-                locationChanged = true;
-            }
-        }
-
-        private void UpdateRegion()
-        {
-            if (lastRegion != territoryInfo->RegionID)
-            {
-                lastRegion = territoryInfo->RegionID;
-                currentRegion = territoryInfo->Region;
-                locationChanged = true;
-            }
+            lastRegion = territoryInfo->RegionID;
+            currentRegion = territoryInfo->Region;
+            locationChanged = true;
         }
     }
 }
