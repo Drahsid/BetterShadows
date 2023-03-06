@@ -110,6 +110,7 @@ public class Configuration : IPluginConfiguration
     public bool EditOverride = false;
     public bool ZoneConfigBeforePreset = false;
     public bool HideTooltips = false;
+    public bool ShowContinent = true;
     #endregion
 
     public string lastSelectedPreset = "";

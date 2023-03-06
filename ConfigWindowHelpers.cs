@@ -96,8 +96,18 @@ internal static class ConfigWindowHelpers {
         }
 
         ImGui.BeginChild("##ZonePresetConfigList", regionAvail);
-        foreach (var preset in Globals.Config.shared.mapPresets) {
-            DrawMapPresetTree(preset.Value.Children, new string[] { preset.Key });
+        if (Globals.Config.ShowContinent) {
+            foreach (var preset in Globals.Config.shared.mapPresets) {
+                if (ImGui.TreeNode($"{preset.Key}##{preset.Key}")) {
+                    DrawMapPresetTree(preset.Value.Children, new string[] { preset.Key });
+                    ImGui.TreePop();
+                }
+            }
+        }
+        else {
+            foreach (var preset in Globals.Config.shared.mapPresets) {
+                DrawMapPresetTree(preset.Value.Children, new string[] { preset.Key });
+            }
         }
         ImGui.EndChild();
 

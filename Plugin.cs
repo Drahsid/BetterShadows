@@ -8,7 +8,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-[assembly: System.Reflection.AssemblyVersion("1.1.1")]
+[assembly: System.Reflection.AssemblyVersion("1.1.2")]
 
 namespace BetterShadows;
 
@@ -103,7 +103,7 @@ public class Plugin : IDalamudPlugin
     }
 
     private Dictionary<string, ConfigTreeNode> SortConfigDictionaryAndChildren(Dictionary<string, ConfigTreeNode> dictionary) {
-        Dictionary<string, ConfigTreeNode> result = dictionary.OrderBy(entry => entry.Key).ToDictionary(entry => entry.Key, entry => entry.Value);
+        Dictionary<string, ConfigTreeNode> result = dictionary.OrderBy(entry => entry.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(entry => entry.Key, entry => entry.Value);
         foreach (var entry in result.Values) {
             if (entry.Children != null) {
                 entry.Children = SortConfigDictionaryAndChildren(entry.Children);

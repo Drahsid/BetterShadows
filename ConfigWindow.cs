@@ -75,13 +75,17 @@ public class ConfigWindow : Window, IDisposable
         ImGui.Checkbox("Hide tooltips", ref Globals.Config.HideTooltips);
         ConfigWindowHelpers.DrawTooltip("Hide tooltips when hovering over settings.");
 
-        ImGui.Checkbox("Show Zone Preset Config before Presets", ref Globals.Config.ZoneConfigBeforePreset);
-        ConfigWindowHelpers.DrawTooltip("When enabled, this reorders the config options below to show the Zone Preset Config first.");
-
-        ImGui.Checkbox("Edit Override", ref Globals.Config.EditOverride);
-        ConfigWindowHelpers.DrawTooltip("When enabled, ignores the Zone Preset Config, and uses the values that are currently in the preset editor. When making changes to a preset, this is automatically enabled.");
-
         if (Globals.Config.Enabled) {
+            ImGui.SameLine();
+            ImGui.Checkbox("Show Continent", ref Globals.Config.ShowContinent);
+            ConfigWindowHelpers.DrawTooltip("Show the Continent in the zone list");
+
+            ImGui.Checkbox("Show Zone Preset Config before Presets", ref Globals.Config.ZoneConfigBeforePreset);
+            ConfigWindowHelpers.DrawTooltip("When enabled, this reorders the config options below to show the Zone Preset Config first.");
+
+            ImGui.Checkbox("Edit Override", ref Globals.Config.EditOverride);
+            ConfigWindowHelpers.DrawTooltip("When enabled, ignores the Zone Preset Config, and uses the values that are currently in the preset editor. When making changes to a preset, this is automatically enabled.");
+
             ImGui.Text("Popout: ");
             ImGui.SameLine();
             if (ImGui.Button("Preset Editor")) {
@@ -129,6 +133,7 @@ public class ConfigWindow : Window, IDisposable
 
             ConfigWindowHelpers.DrawPresetEditor(ref set_override);
 
+            // safe scroll line
             Vector2 windowPos = ImGui.GetWindowPos();
             Vector2 regionMax = ImGui.GetContentRegionMax();
             Vector2 regionAvail = ImGui.GetContentRegionAvail();

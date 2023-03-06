@@ -4,20 +4,20 @@ using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Runtime.InteropServices;
 using Dalamud.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Housing;
+using Dalamud.Logging;
 
 namespace BetterShadows;
 
 // referenced from WAIA
 
-[StructLayout(LayoutKind.Explicit, Size = 76)]
-public readonly struct TerritoryInfoStruct {
-    [FieldOffset(8)] private readonly int InSanctuary;
-    [FieldOffset(16)] public readonly uint RegionID;
-    [FieldOffset(20)] public readonly uint SubAreaID;
+[StructLayout(LayoutKind.Explicit, Size = 0x60)]
+public struct TerritoryInfo {
+    [FieldOffset(0x1C)] public int InSanctuary;
+    [FieldOffset(0x24)] public uint AreaPlaceNameID;
+    [FieldOffset(0x28)] public uint SubAreaPlaceNameID;
 
-    public bool IsInSanctuary => InSanctuary == 1;
-    public PlaceName? Region => Service.DataManager.GetExcelSheet<PlaceName>()!.GetRow(RegionID);
-    public PlaceName? SubArea => Service.DataManager.GetExcelSheet<PlaceName>()!.GetRow(SubAreaID);
+    public bool IsInSanctuary() => InSanctuary != 0;
 }
 
 public unsafe class DtrDisplay : IDisposable
@@ -33,8 +33,8 @@ public unsafe class DtrDisplay : IDisposable
 
     public bool locationChanged;
 
-    [Signature("8B 2D ?? ?? ?? ?? 41 BF", ScanType = ScanType.StaticAddress)]
-    private readonly TerritoryInfoStruct* territoryInfo = null!;
+    [Signature("48 8D 0D ?? ?? ?? ?? BA ?? ?? ?? ?? F3 0F 5C 05", ScanType = ScanType.StaticAddress)]
+    private readonly TerritoryInfo* territoryInfo = null!;
 
     public DtrDisplay()
     {
@@ -57,17 +57,22 @@ public unsafe class DtrDisplay : IDisposable
         UpdateRegion();
         UpdateSubArea();
         UpdateTerritory();
+
+        // attempt to eliminate bogus entries
+        var house = HousingManager.Instance();
+
+        if (house->GetCurrentHouseId() != -1 || house->GetCurrentPlot() != -1 || house->GetCurrentWard() != -1) {
+            currentRegion = null;
+            currentSubArea = null;
+        }
     }
 
     private void OnZoneChange(object? sender, ushort e) => locationChanged = true;
 
-    private void UpdateTerritory()
-    {
-        if (lastTerritory != Service.ClientState.TerritoryType)
-        {
+    private void UpdateTerritory() {
+        if (lastTerritory != Service.ClientState.TerritoryType) {
             lastTerritory = Service.ClientState.TerritoryType;
-            var territory = Service.DataManager.GetExcelSheet<TerritoryType>()!
-                .GetRow(Service.ClientState.TerritoryType);
+            var territory = Service.DataManager.GetExcelSheet<TerritoryType>()!.GetRow(Service.ClientState.TerritoryType);
 
             currentTerritory = territory?.PlaceName.Value;
             currentContinent = territory?.PlaceNameRegion.Value;
@@ -75,23 +80,21 @@ public unsafe class DtrDisplay : IDisposable
         }
     }
 
-    private void UpdateSubArea()
-    {
-        if (lastSubArea != territoryInfo->SubAreaID)
-        {
-            lastSubArea = territoryInfo->SubAreaID;
-            currentSubArea = territoryInfo->SubArea;
+    private void UpdateSubArea() {
+        if (lastSubArea != territoryInfo->SubAreaPlaceNameID) {
+            lastSubArea = territoryInfo->SubAreaPlaceNameID;
+            currentSubArea = GetPlaceName(territoryInfo->SubAreaPlaceNameID);
             locationChanged = true;
         }
     }
 
-    private void UpdateRegion()
-    {
-        if (lastRegion != territoryInfo->RegionID)
-        {
-            lastRegion = territoryInfo->RegionID;
-            currentRegion = territoryInfo->Region;
+    private void UpdateRegion() {
+        if (lastRegion != territoryInfo->AreaPlaceNameID) {
+            lastRegion = territoryInfo->AreaPlaceNameID;
+            currentRegion = GetPlaceName(territoryInfo->AreaPlaceNameID);
             locationChanged = true;
         }
     }
+
+    private static PlaceName? GetPlaceName(uint row) => Service.DataManager.GetExcelSheet<PlaceName>()!.GetRow(row);
 }
