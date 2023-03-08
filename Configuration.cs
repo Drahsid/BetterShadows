@@ -115,7 +115,15 @@ public class Configuration : IPluginConfiguration
 
     public string lastSelectedPreset = "";
 
-    private DalamudPluginInterface pluginInterface;
+    private List<CascadeConfig> defaultCascadePresets = new List<CascadeConfig> {
+        new CascadeConfig("Seamless", 28, 56, 112, 196),
+        new CascadeConfig("Long Distance", 256, 768, 1536, 3072),
+        new CascadeConfig("Balanced", 40, 116, 265, 2154),
+        new CascadeConfig("Detailed", 13, 34, 64, 138),
+        new CascadeConfig("Compromise", 72, 144, 432, 3072)
+    };
+
+private DalamudPluginInterface pluginInterface;
 
     public Guid GetZonePresetGUID(string[] keys) {
         string key = keys[0];
@@ -187,13 +195,7 @@ public class Configuration : IPluginConfiguration
         }
 
         if (shared.cascadePresets == null) {
-            shared.cascadePresets = new List<CascadeConfig> {
-                new CascadeConfig("Long Distance", 256, 768, 1536, 3072),
-                new CascadeConfig("Balanced", 40, 116, 265, 2154),
-                new CascadeConfig("Detailed", 13, 34, 64, 138),
-                new CascadeConfig("Seamless", 28, 56, 112, 196),
-                new CascadeConfig("Compromise", 72, 144, 432, 3072)
-            };
+            shared.cascadePresets = defaultCascadePresets;
         }
 
         foreach (CascadeConfig c in shared.cascadePresets) {
@@ -203,7 +205,11 @@ public class Configuration : IPluginConfiguration
         }
 
         if (shared.defaultPreset is null) {
-            shared.defaultPreset = shared.cascadePresets[3].GUID;
+            if (shared.cascadePresets.Count == 0) {
+                shared.cascadePresets = defaultCascadePresets;
+            }
+            
+            shared.defaultPreset = shared.cascadePresets[0].GUID;
         }
 
         if (shared.mapPresets is null) {

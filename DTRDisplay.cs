@@ -31,7 +31,7 @@ public unsafe class DtrDisplay : IDisposable
     private uint lastRegion;
     private uint lastSubArea;
 
-    public bool locationChanged;
+    public bool locationChanged = false;
 
     [Signature("48 8D 0D ?? ?? ?? ?? BA ?? ?? ?? ?? F3 0F 5C 05", ScanType = ScanType.StaticAddress)]
     private readonly TerritoryInfo* territoryInfo = null!;
