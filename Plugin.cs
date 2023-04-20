@@ -10,7 +10,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-[assembly: System.Reflection.AssemblyVersion("1.1.3")]
+[assembly: System.Reflection.AssemblyVersion("1.1.4")]
 
 namespace BetterShadows;
 
