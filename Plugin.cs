@@ -1,4 +1,6 @@
 ﻿using BetterShadows.Attributes;
+using Dalamud;
+using Dalamud.Game;
 using Dalamud.Game.ClientState;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
@@ -50,9 +52,8 @@ public class Plugin : IDalamudPlugin
 
     private unsafe void DrawPost()
     {
-        ShadowManager* shadowManager = ShadowManager.Instance();
-
         if ((Globals.DtrDisplay.locationChanged || Globals.ReapplyPreset) && !Globals.Config.EditOverride) {
+            ShadowManager* shadowManager = ShadowManager.Instance();
             string continent = "";
             string territory = "";
             string region = "";
@@ -78,21 +79,21 @@ public class Plugin : IDalamudPlugin
             }
 
             Globals.Config.ApplyPresetByGuid(Globals.Config.GetZonePresetGUID(new string[] { continent, territory, region, subArea }));
-        }
 
-        Globals.Config.FixupZoneDefaultPresets();
+            if (shadowManager != null && Globals.Config.Enabled) {
+                shadowManager->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
+                shadowManager->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
+                shadowManager->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
+                shadowManager->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+            }
 
-        if (shadowManager != null && Globals.Config.Enabled) {
-            shadowManager->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
-            shadowManager->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
-            shadowManager->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
-            shadowManager->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+            Globals.Config.FixupZoneDefaultPresets();
+            Globals.Config.shared.mapPresets = SortConfigDictionaryAndChildren(Globals.Config.shared.mapPresets);
         }
     }
 
     private void DrawUI()
     {
-        Globals.Config.shared.mapPresets = SortConfigDictionaryAndChildren(Globals.Config.shared.mapPresets);
         Globals.WindowSystem.Draw();
         DrawPost();
     }
