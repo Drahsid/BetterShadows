@@ -90,6 +90,16 @@ public class Plugin : IDalamudPlugin
             Globals.Config.FixupZoneDefaultPresets();
             Globals.Config.shared.mapPresets = SortConfigDictionaryAndChildren(Globals.Config.shared.mapPresets);
         }
+
+        if (Globals.Config.EditOverride) {
+            ShadowManager* shadowManager = ShadowManager.Instance();
+            if (shadowManager != null && Globals.Config.Enabled) {
+                shadowManager->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
+                shadowManager->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
+                shadowManager->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
+                shadowManager->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+            }
+        }
     }
 
     private void DrawUI()
