@@ -10,10 +10,17 @@
 		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
 		<PlatformTarget>x64</PlatformTarget>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+		<Nullable>enable</Nullable>
 		<RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
 		<GenerateAssemblyInfo>false</GenerateAssemblyInfo>
 		<Deterministic>false</Deterministic>
 	</PropertyGroup>
+
+	<ItemGroup>
+        <None Remove=".gitattributes" />
+        <None Remove=".gitignore" />
+		<None Remove="packages.lock.json" />
+    </ItemGroup>
 
 	<ItemGroup>
 		<PackageReference Include="DalamudPackager" Version="2.1.11" />
@@ -68,6 +75,10 @@
 			<HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\DrahsidLib\DrahsidLib.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

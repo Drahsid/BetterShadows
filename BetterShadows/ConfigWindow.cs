@@ -1,27 +1,23 @@
-﻿using Dalamud.Interface.Animation.EasingFunctions;
-using Dalamud.Interface;
-using Dalamud.Interface.Windowing;
-using ImGuiNET;
+﻿using ImGuiNET;
 using System;
 using System.Numerics;
+using DrahsidLib;
 
 namespace BetterShadows;
 
-public class ConfigWindow : Window, IDisposable
+public class ConfigWindow : WindowWrapper
 {
     public static string ConfigWindowName = "Better Shadows Config";
-
-    private Vector2 MinSize = new Vector2(500, 240);
-    private Vector2 AdjustedMinSize = new Vector2(500, 240);
+    private static Vector2 MinSize = new Vector2(500, 240);
 
     private PresetEditorWindow PresetEditorWnd;
     private PresetListWindow PresetListWnd;
     private PresetZoneListWindow PresetZoneWnd;
 
-    public ConfigWindow(Plugin plugin) : base(ConfigWindowName) {
-        PresetEditorWnd = new PresetEditorWindow(plugin);
-        PresetListWnd = new PresetListWindow(plugin);
-        PresetZoneWnd = new PresetZoneListWindow(plugin);
+    public ConfigWindow() : base(ConfigWindowName, MinSize) {
+        PresetEditorWnd = new PresetEditorWindow();
+        PresetListWnd = new PresetListWindow();
+        PresetZoneWnd = new PresetZoneListWindow();
 
         Globals.WindowSystem.AddWindow(PresetEditorWnd);
         Globals.WindowSystem.AddWindow(PresetListWnd);
@@ -40,70 +36,69 @@ public class ConfigWindow : Window, IDisposable
         PresetZoneWnd.IsOpen = !PresetZoneWnd.IsOpen;
     }
 
-    public override void PreDraw() {
-        AdjustedMinSize = MinSize * ImGuiHelpers.GlobalScale;
-        ImGui.SetNextWindowSizeConstraints(AdjustedMinSize, new Vector2(float.MaxValue, float.MaxValue));
-    }
-
-    public override void Draw()
-    {
+    public override void Draw() {
         bool set_override = false;
 
-        if (ImGui.Button("Copy Presets and Zone Config")) {
+        if (WindowDrawHelpers.DrawButtonTooltip("Copy Presets and Zone Config", "Copy your entire configuration for sharing.")) {
             ImGui.SetClipboardText(Globals.Config.shared.ToBase64());
         }
-        ConfigWindowHelpers.DrawTooltip("Copy your entire configuration for sharing.");
 
         ImGui.SameLine();
-        if (ImGui.Button("Paste Presets and Zone Config")) {
+        if (WindowDrawHelpers.DrawButtonTooltip("Paste Presets and Zone Config", "Paste a shared configuration. This will destroy your existing config.")) {
             Globals.Config.shared = SharableData.FromBase64(ImGui.GetClipboardText());
         }
-        ConfigWindowHelpers.DrawTooltip("Paste a shared configuration. This will destroy your existing config.");
 
-        if (ImGui.Checkbox("Enable Custom Cascade Values", ref Globals.Config.Enabled))
-        {
+        if (WindowDrawHelpers.DrawCheckboxTooltip(
+            "Enable Custom Cascade Values",
+            ref Globals.Config.Enabled,
+            "Enable or disable the usage of custom shadow cascade values. When this is disabled, the Zone Preset Config section is hidden, since it would be unused.")) {
             Globals.ToggleHacks();
         }
-        ConfigWindowHelpers.DrawTooltip("Enable or disable the usage of custom shadow cascade values. When this is disabled, the Zone Preset Config section is hidden, since it would be unused.");
 
-        if (ImGui.Checkbox("2048p = 4096p shadowmap", ref Globals.Config.HigherResShadowmap))
-        {
+        
+        if (WindowDrawHelpers.DrawCheckboxTooltip(
+            "2048p = 4096p shadowmap",
+            ref Globals.Config.HigherResShadowmap,
+            "Enable or disable using a 4096p shadowmap when you have the 2048p shadowmap setting. This doubles the resolution of the shadowmap when enabled, making shadows look clearer.")) {
             Globals.ToggleShadowmap();
         }
-        ConfigWindowHelpers.DrawTooltip("Enable or disable using a 4096p shadowmap when you have the 2048p shadowmap setting. This doubles the resolution of the shadowmap when enabled, making shadows look clearer.");
 
-        ImGui.Checkbox("Hide tooltips", ref Globals.Config.HideTooltips);
-        ConfigWindowHelpers.DrawTooltip("Hide tooltips when hovering over settings.");
+        WindowDrawHelpers.DrawCheckboxTooltip("Hide tooltips",
+            ref Globals.Config.HideTooltips,
+            "Hide tooltips when hovering over settings.");
 
         if (Globals.Config.Enabled) {
             ImGui.SameLine();
-            ImGui.Checkbox("Show Continent", ref Globals.Config.ShowContinent);
-            ConfigWindowHelpers.DrawTooltip("Show the Continent in the zone list");
+            WindowDrawHelpers.DrawCheckboxTooltip(
+                "Show Continent",
+                ref Globals.Config.ShowContinent,
+                "Show the Continent in the zone list");
 
-            ImGui.Checkbox("Show Zone Preset Config before Presets", ref Globals.Config.ZoneConfigBeforePreset);
-            ConfigWindowHelpers.DrawTooltip("When enabled, this reorders the config options below to show the Zone Preset Config first.");
+            WindowDrawHelpers.DrawCheckboxTooltip(
+                "Show Zone Preset Config before Presets",
+                ref Globals.Config.ZoneConfigBeforePreset,
+                "When enabled, this reorders the config options below to show the Zone Preset Config first.");
 
-            ImGui.Checkbox("Edit Override", ref Globals.Config.EditOverride);
-            ConfigWindowHelpers.DrawTooltip("When enabled, ignores the Zone Preset Config, and uses the values that are currently in the preset editor. When making changes to a preset, this is automatically enabled.");
+            WindowDrawHelpers.DrawCheckboxTooltip(
+                "Edit Override",
+                ref Globals.Config.EditOverride,
+                "When enabled, ignores the Zone Preset Config, and uses the values that are currently in the preset editor. When making changes to a preset, this is automatically enabled.");
 
-            ImGui.Text("Popout: ");
+            ImGui.Text("Popout:");
             ImGui.SameLine();
-            if (ImGui.Button("Preset Editor")) {
+            if (WindowDrawHelpers.DrawButtonTooltip("Preset Editor", "Popout the preset editor.")) {
                 TogglePresetEditorPopout();
             }
-            ConfigWindowHelpers.DrawTooltip("Popout the preset editor.");
 
             ImGui.SameLine();
-            if (ImGui.Button("Preset List")) {
+            if (WindowDrawHelpers.DrawButtonTooltip("Preset List", "Popout the preset list.")) {
                 TogglePresetListPopout();
             }
-            ConfigWindowHelpers.DrawTooltip("Popout the preset list.");
 
             ImGui.SameLine();
-            if (ImGui.Button("Zone List")) {
+            if (WindowDrawHelpers.DrawButtonTooltip("Zone List", "Popout the zone list.")) {
                 TogglePresetZonePopout();
             }
-            ConfigWindowHelpers.DrawTooltip("Popout the zone list.");
 
             string preview = "";
             foreach (CascadeConfig config in Globals.Config.shared.cascadePresets) {
@@ -165,9 +160,10 @@ public class ConfigWindow : Window, IDisposable
         }
     }
 
-    public void Dispose() {
+    public override void Dispose() {
         Globals.WindowSystem.RemoveWindow(PresetEditorWnd);
         Globals.WindowSystem.RemoveWindow(PresetListWnd);
         Globals.WindowSystem.RemoveWindow(PresetZoneWnd);
+        base.Dispose();
     }
 }

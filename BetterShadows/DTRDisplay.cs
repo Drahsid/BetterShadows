@@ -6,6 +6,7 @@ using System.Runtime.InteropServices;
 using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Housing;
 using Dalamud.Logging;
+using DrahsidLib;
 
 namespace BetterShadows;
 

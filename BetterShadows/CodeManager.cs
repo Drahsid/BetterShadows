@@ -1,5 +1,6 @@
 ﻿using Dalamud.Logging;
 using Dalamud.Memory;
+using DrahsidLib;
 using System;
 using System.Runtime.InteropServices;
 

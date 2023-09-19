@@ -6,6 +6,7 @@ using Dalamud.Game.Command;
 using Dalamud.Game.Gui;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
+using DrahsidLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -32,7 +33,7 @@ public class Plugin : IDalamudPlugin
 
         // Initialize the UI
         Globals.WindowSystem = new WindowSystem(typeof(Plugin).AssemblyQualifiedName);
-        ConfigWnd = new ConfigWindow(this);
+        ConfigWnd = new ConfigWindow();
         Globals.WindowSystem.AddWindow(ConfigWnd);
 
         // Load all of our commands
@@ -48,6 +49,8 @@ public class Plugin : IDalamudPlugin
 
         PluginInterface.UiBuilder.Draw += DrawUI;
         PluginInterface.UiBuilder.OpenConfigUi += ToggleConfig;
+
+        DrahsidLib.DrahsidLib.Initialize(ConfigWindowHelpers.DrawTooltip);
     }
 
     private unsafe void DrawPost()

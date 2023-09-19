@@ -1,4 +1,5 @@
-﻿using FFXIVClientStructs.FFXIV.Common.Math;
+﻿using DrahsidLib;
+using FFXIVClientStructs.FFXIV.Common.Math;
 using ImGuiNET;
 using Newtonsoft.Json;
 using System;
@@ -7,25 +8,6 @@ using System.Collections.Generic;
 namespace BetterShadows; 
 internal static class ConfigWindowHelpers {
     private static float Deadzone = 64;
-
-    public static bool DrawFloatInput(string text, ref float cvar, float min, float max, string tooltip = "") {
-        float input_width = ImGui.CalcTextSize("F").X * 10;
-        bool result = false;
-
-        ImGui.SetNextItemWidth(input_width * 2);
-        result |= ImGui.SliderFloat(text, ref cvar, min, max);
-        if (tooltip != "") {
-            DrawTooltip(tooltip);
-        }
-
-        ImGui.SameLine();
-        ImGui.SetNextItemWidth(input_width);
-        result |= ImGui.InputFloat($"##{text}", ref cvar);
-        if (tooltip != "") {
-            DrawTooltip(tooltip);
-        }
-        return result;
-    }
 
     public static void DrawTooltip(string text) {
         if (ImGui.IsItemHovered() && Globals.Config.HideTooltips == false) {
@@ -132,27 +114,32 @@ internal static class ConfigWindowHelpers {
 
         ImGui.BeginChild("##PresetConfigList", regionAvail);
         for (int index = 0; index < Globals.Config.shared.cascadePresets.Count; index++) {
-            if (ImGui.Button($"Copy##BSHADOWS_COPY_{Globals.Config.shared.cascadePresets[index].Name}_{index}")) {
+            if (WindowDrawHelpers.DrawButtonTooltip(
+                $"Copy##BSHADOWS_COPY_{Globals.Config.shared.cascadePresets[index].Name}_{index}",
+                "Copy saved values to the clipboard."))
+            {
                 ImGui.SetClipboardText(JsonConvert.SerializeObject(Globals.Config.shared.cascadePresets[index]));
             }
-            DrawTooltip("Copy saved values to the clipboard.");
 
             ImGui.SameLine();
-            if (ImGui.Button($"Save##BSHADOWS_SAVE_{Globals.Config.shared.cascadePresets[index].Name}_{index}")) {
+            if (WindowDrawHelpers.DrawButtonTooltip(
+                $"Save##BSHADOWS_SAVE_{Globals.Config.shared.cascadePresets[index].Name}_{index}",
+                "Save current values in the preset editor to this preset. You can change the name without disconnecting it from zones that use it.")) {
                 Globals.Config.shared.cascadePresets[index].Name = Globals.Config.cascades.Name;
                 Globals.Config.shared.cascadePresets[index].CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
                 Globals.Config.shared.cascadePresets[index].CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
                 Globals.Config.shared.cascadePresets[index].CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
                 Globals.Config.shared.cascadePresets[index].CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
             }
-            DrawTooltip("Save current values in the preset editor to this preset. You can change the name without disconnecting it from zones that use it.");
 
             ImGui.SameLine();
-            if (ImGui.Button($"Delete##BSHADOWS_DELETE_{Globals.Config.shared.cascadePresets[index].Name}_{index}")) {
+            if (WindowDrawHelpers.DrawButtonTooltip(
+                $"Delete##BSHADOWS_DELETE_{Globals.Config.shared.cascadePresets[index].Name}_{index}",
+                "Delete the preset from the list. This will cause zones which use this preset to use the default config."))
+            {
                 Globals.Config.shared.cascadePresets.RemoveAt(index);
                 break;
             }
-            DrawTooltip("Delete the preset from the list. This will cause zones which use this preset to use the default config.");
 
             ImGui.SameLine();
             if (ImGui.Selectable(Globals.Config.shared.cascadePresets[index].Name, Globals.Config.shared.cascadePresets[index].GUID == Globals.Config.cascades.GUID)) {
@@ -167,15 +154,13 @@ internal static class ConfigWindowHelpers {
             }
 
             if (index == Globals.Config.shared.cascadePresets.Count - 1) {
-                if (ImGui.Button("Paste")) {
+                if (WindowDrawHelpers.DrawButtonTooltip("Paste", "Paste preset values from the clipboard as a new preset.")) {
                     Globals.Config.shared.cascadePresets.Add(JsonConvert.DeserializeObject<CascadeConfig>(ImGui.GetClipboardText()));
                 }
-                DrawTooltip("Paste preset values from the clipboard as a new preset.");
                 ImGui.SameLine();
-                if (ImGui.Button("+")) {
+                if (WindowDrawHelpers.DrawButtonTooltip("+", "Add a new preset.")) {
                     Globals.Config.shared.cascadePresets.Add(new CascadeConfig(Globals.Config.cascades));
                 }
-                DrawTooltip("Add a new preset.");
             }
         }
         ImGui.EndChild();
@@ -192,26 +177,52 @@ internal static class ConfigWindowHelpers {
         ImGui.Text("Selected Preset: ");
         ImGui.SameLine();
         ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.0f, 1.0f), Globals.Config.cascades.Name);
-        DrawFloatInput("Slider Max", ref Globals.Config.SliderMax, Globals.Config.cascades.CascadeDistance3, 32768, "The max range for the furthest cascade");
-        set_override |= DrawFloatInput("Cascade Distance 0", ref Globals.Config.cascades.CascadeDistance0, 0.1f, Globals.Config.cascades.CascadeDistance1, "The distance of the closest cascade. This should have the lowest value.");
-        set_override |= DrawFloatInput("Cascade Distance 1", ref Globals.Config.cascades.CascadeDistance1, Globals.Config.cascades.CascadeDistance0, Globals.Config.cascades.CascadeDistance2, "The distance of the second closest cascade. The value of this should be between Cascade Distance 0, and Cascade Distance 2.");
-        set_override |= DrawFloatInput("Cascade Distance 2", ref Globals.Config.cascades.CascadeDistance2, Globals.Config.cascades.CascadeDistance1, Globals.Config.cascades.CascadeDistance3, "The distance of the second farthest cascade. The value of this should be between Cascade Distance 1, and Cascade Distance 3.");
-        set_override |= DrawFloatInput("Cascade Distance 3", ref Globals.Config.cascades.CascadeDistance3, Globals.Config.cascades.CascadeDistance2, Globals.Config.SliderMax, "The distance of the farthest cascade. The value of this should be the largest.");
+        WindowDrawHelpers.DrawFloatInputTooltip(
+            "Slider Max",
+            ref Globals.Config.SliderMax,
+            "The max range for the furthest cascade",
+            Globals.Config.cascades.CascadeDistance3,
+            32768.0f);
+
+        set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
+            "Cascade Distance 0",
+            ref Globals.Config.cascades.CascadeDistance0,
+            "The distance of the closest cascade. This should have the lowest value.",
+            0.1f,
+            Globals.Config.cascades.CascadeDistance1);
+
+        set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
+            "Cascade Distance 1",
+            ref Globals.Config.cascades.CascadeDistance1,
+            "The distance of the second closest cascade. The value of this should be between Cascade Distance 0, and Cascade Distance 2.",
+            Globals.Config.cascades.CascadeDistance0,
+            Globals.Config.cascades.CascadeDistance2);
+
+        set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
+            "Cascade Distance 2",
+            ref Globals.Config.cascades.CascadeDistance2,
+            "The distance of the second farthest cascade. The value of this should be between Cascade Distance 1, and Cascade Distance 3.",
+            Globals.Config.cascades.CascadeDistance1,
+            Globals.Config.cascades.CascadeDistance3);
+
+        set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
+            "Cascade Distance 3",
+            ref Globals.Config.cascades.CascadeDistance3,
+            "The distance of the farthest cascade. The value of this should be the largest.",
+            Globals.Config.cascades.CascadeDistance2,
+            Globals.Config.SliderMax);
 
         ImGui.SetNextItemWidth(charX * 34);
-        ImGui.InputText("Name", ref Globals.Config.cascades.Name, 32);
-        DrawTooltip("The name of this preset.");
+        WindowDrawHelpers.DrawInputTextTooltip("Name", ref Globals.Config.cascades.Name, "The name of this preset.");
 
-        if (ImGui.Button($"Copy##BSHADOWS_COPY_RIGHTCOLUMN")) {
+        if (WindowDrawHelpers.DrawButtonTooltip($"Copy##BSHADOWS_COPY_RIGHTCOLUMN", "Copy the values in the preset editor to the clipboard.")) {
             ImGui.SetClipboardText(JsonConvert.SerializeObject(Globals.Config.cascades));
         }
-        DrawTooltip("Copy the values in the preset editor to the clipboard.");
 
         ImGui.SameLine();
-        if (ImGui.Button($"Paste##BSHADOWS_PASTE_RIGHTCOLUMN")) {
+        if (WindowDrawHelpers.DrawButtonTooltip($"Paste##BSHADOWS_PASTE_RIGHTCOLUMN", "Paste the values in clipboard to the preset editor.")) {
             Globals.Config.cascades = JsonConvert.DeserializeObject<CascadeConfig>(ImGui.GetClipboardText());
         }
-        DrawTooltip("Paste the values in clipboard to the preset editor.");
 
         ImGui.Separator();
     }

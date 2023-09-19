@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33516.290
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BetterShadows", "BetterShadows.csproj", "{B57BC4DB-A350-4A4A-B6F0-30802AF68C40}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "BetterShadows", ".\BetterShadows\BetterShadows.csproj", "{B57BC4DB-A350-4A4A-B6F0-30802AF68C40}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,11 +15,5 @@ Global
 		{B57BC4DB-A350-4A4A-B6F0-30802AF68C40}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B57BC4DB-A350-4A4A-B6F0-30802AF68C40}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B57BC4DB-A350-4A4A-B6F0-30802AF68C40}.Release|Any CPU.Build.0 = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {88695C8E-475D-4ED9-B828-285B850E9EAD}
 	EndGlobalSection
 EndGlobal
