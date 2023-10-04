@@ -5,7 +5,8 @@ using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
-namespace BetterShadows; 
+namespace BetterShadows;
+
 internal static class ConfigWindowHelpers {
     private static float Deadzone = 64;
 

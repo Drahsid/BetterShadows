@@ -129,6 +129,7 @@ public class Plugin : IDalamudPlugin {
 
         PluginInterface.SavePluginConfig(Globals.Config);
 
+        PluginInterface.UiBuilder.Draw -= DrawUI;
         Windows.Dispose();
         PluginInterface.UiBuilder.OpenConfigUi -= Commands.ToggleConfig;
 
