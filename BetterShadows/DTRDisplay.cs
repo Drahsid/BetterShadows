@@ -1,28 +1,15 @@
-﻿using BetterShadows;
-using Dalamud.Utility.Signatures;
+﻿using DrahsidLib;
 using Lumina.Excel.GeneratedSheets;
 using System;
-using System.Runtime.InteropServices;
-using Dalamud.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Housing;
-using Dalamud.Logging;
-using DrahsidLib;
+using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace BetterShadows;
 
 // referenced from WAIA
 
-[StructLayout(LayoutKind.Explicit, Size = 0x60)]
-public struct TerritoryInfo {
-    [FieldOffset(0x1C)] public int InSanctuary;
-    [FieldOffset(0x24)] public uint AreaPlaceNameID;
-    [FieldOffset(0x28)] public uint SubAreaPlaceNameID;
-
-    public bool IsInSanctuary() => InSanctuary != 0;
-}
-
-public unsafe class DtrDisplay : IDisposable
-{
+public unsafe class DtrDisplay : IDisposable {
     public PlaceName? currentContinent;
     public PlaceName? currentTerritory;
     public PlaceName? currentRegion;
@@ -34,25 +21,19 @@ public unsafe class DtrDisplay : IDisposable
 
     public bool locationChanged = false;
 
-    [Signature("48 8D 0D ?? ?? ?? ?? BA ?? ?? ?? ?? F3 0F 5C 05", ScanType = ScanType.StaticAddress)]
-    private readonly TerritoryInfo* territoryInfo = null!;
+    private TerritoryInfo* territoryInfo => TerritoryInfo.Instance();
 
-    public DtrDisplay()
-    {
-        SignatureHelper.Initialise(this);
-
+    public DtrDisplay() {
         Service.Framework.Update += OnFrameworkUpdate;
         Service.ClientState.TerritoryChanged += OnZoneChange;
     }
 
-    public void Dispose()
-    {
+    public void Dispose() {
         Service.Framework.Update -= OnFrameworkUpdate;
         Service.ClientState.TerritoryChanged -= OnZoneChange;
     }
 
-    private void OnFrameworkUpdate(Framework framework)
-    {
+    private void OnFrameworkUpdate(IFramework framework) {
         if (Service.ClientState.LocalPlayer is null) return;
 
         UpdateRegion();
@@ -68,7 +49,7 @@ public unsafe class DtrDisplay : IDisposable
         }
     }
 
-    private void OnZoneChange(object? sender, ushort e) => locationChanged = true;
+    private void OnZoneChange(ushort e) => locationChanged = true;
 
     private void UpdateTerritory() {
         if (lastTerritory != Service.ClientState.TerritoryType) {

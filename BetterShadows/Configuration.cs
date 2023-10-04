@@ -1,5 +1,5 @@
 ﻿using Dalamud.Configuration;
-using Dalamud.Plugin;
+using DrahsidLib;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
@@ -8,8 +8,7 @@ using System.Text;
 
 namespace BetterShadows;
 
-public class CascadeConfig
-{
+public class CascadeConfig {
     public string Name = "";
     public Guid? GUID = Guid.Empty;
     public float CascadeDistance0 = 72.0f;
@@ -25,8 +24,7 @@ public class CascadeConfig
         CascadeDistance2 = copy.CascadeDistance2;
         CascadeDistance3 = copy.CascadeDistance3;
     }
-    public CascadeConfig(string name, float cascadeDistance0, float cascadeDistance1, float cascadeDistance2, float cascadeDistance3)
-    {
+    public CascadeConfig(string name, float cascadeDistance0, float cascadeDistance1, float cascadeDistance2, float cascadeDistance3) {
         Name = name;
         CascadeDistance0 = cascadeDistance0;
         CascadeDistance1 = cascadeDistance1;
@@ -92,8 +90,7 @@ public class SharableData {
 }
 
 
-public class Configuration : IPluginConfiguration
-{
+public class Configuration : IPluginConfiguration {
     int IPluginConfiguration.Version { get; set; }
 
     #region Saved configuration values
@@ -123,7 +120,18 @@ public class Configuration : IPluginConfiguration
         new CascadeConfig("Compromise", 72, 144, 432, 3072)
     };
 
-private DalamudPluginInterface pluginInterface;
+    public Configuration() {
+        if (shared == null) {
+            shared = new SharableData();
+            if (cascadePresets != null) {
+                shared.cascadePresets = new List<CascadeConfig>();
+                foreach (CascadeConfig c in cascadePresets) {
+                    shared.cascadePresets.Add(c);
+                }
+                cascadePresets = null;
+            }
+        }
+    }
 
     public Guid GetZonePresetGUID(string[] keys) {
         string key = keys[0];
@@ -180,20 +188,7 @@ private DalamudPluginInterface pluginInterface;
         }
     }
 
-    public void Initialize(DalamudPluginInterface pi) {
-        this.pluginInterface = pi;
-
-        if (shared == null) {
-            shared = new SharableData();
-            if (cascadePresets != null) {
-                shared.cascadePresets = new List<CascadeConfig>();
-                foreach (CascadeConfig c in cascadePresets) {
-                    shared.cascadePresets.Add(c);
-                }
-                cascadePresets = null;
-            }
-        }
-
+    public void Initialize() {
         if (shared.cascadePresets == null) {
             shared.cascadePresets = defaultCascadePresets;
         }
@@ -228,6 +223,6 @@ private DalamudPluginInterface pluginInterface;
     }
 
     public void Save() {
-        this.pluginInterface.SavePluginConfig(this);
+        Service.Interface.SavePluginConfig(this);
     }
 }

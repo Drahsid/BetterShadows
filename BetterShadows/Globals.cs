@@ -2,11 +2,9 @@
 
 namespace BetterShadows;
 
-internal class Globals
-{
-    public static Configuration Config;
-    public static DtrDisplay DtrDisplay;
-    public static WindowSystem WindowSystem;
+internal static class Globals {
+    public static Configuration Config { get; set; } = null!;
+    public static DtrDisplay DtrDisplay { get; set; } = null!;
     public static bool ReapplyPreset = false;
 
     public static void ToggleHacks() {

@@ -1,60 +1,52 @@
-﻿using BetterShadows.Attributes;
-using Dalamud;
-using Dalamud.Game;
-using Dalamud.Game.ClientState;
-using Dalamud.Game.Command;
-using Dalamud.Game.Gui;
-using Dalamud.Interface.Windowing;
-using Dalamud.Plugin;
+﻿using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using DrahsidLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-[assembly: System.Reflection.AssemblyVersion("1.2.0")]
 
 namespace BetterShadows;
 
-public class Plugin : IDalamudPlugin
-{
+public class Plugin : IDalamudPlugin {
     private DalamudPluginInterface PluginInterface;
-    private ChatGui Chat;
-    private ClientState ClientState;
-    private PluginCommandManager<Plugin> CommandManager;
-    private ConfigWindow ConfigWnd;
-    
+    private IChatGui Chat { get; init; }
+    private IClientState ClientState { get; init; }
+    private ICommandManager CommandManager { get; init; }
+
     public string Name => "Better Shadows";
 
-    public Plugin(DalamudPluginInterface pluginInterface, CommandManager commandManager, ChatGui chat, ClientState clientState)
-    {
+    public Plugin(DalamudPluginInterface pluginInterface, ICommandManager commandManager, IChatGui chat, IClientState clientState) {
         PluginInterface = pluginInterface;
         Chat = chat;
         ClientState = clientState;
+        CommandManager = commandManager;
 
-        // Initialize the UI
-        Globals.WindowSystem = new WindowSystem(typeof(Plugin).AssemblyQualifiedName);
-        ConfigWnd = new ConfigWindow();
-        Globals.WindowSystem.AddWindow(ConfigWnd);
+        DrahsidLib.DrahsidLib.Initialize(pluginInterface, ConfigWindowHelpers.DrawTooltip);
 
-        // Load all of our commands
-        CommandManager = new PluginCommandManager<Plugin>(this, commandManager);
-
-        PluginInterface.Create<Service>();
-
-        // Get or create a configuration object
-        Globals.Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
-        Globals.Config.Initialize(PluginInterface);
+        InitializeCommands();
+        InitializeConfig();
+        InitializeUI();
 
         Globals.DtrDisplay = new DtrDisplay();
-
-        PluginInterface.UiBuilder.Draw += DrawUI;
-        PluginInterface.UiBuilder.OpenConfigUi += ToggleConfig;
-
-        DrahsidLib.DrahsidLib.Initialize(ConfigWindowHelpers.DrawTooltip);
     }
 
-    private unsafe void DrawPost()
-    {
+    private void InitializeCommands() {
+        Commands.Initialize();
+    }
+
+    private void InitializeConfig() {
+        Globals.Config = PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        Globals.Config.Initialize();
+    }
+
+    private void InitializeUI() {
+        Windows.Initialize();
+        PluginInterface.UiBuilder.Draw += DrawUI;
+        PluginInterface.UiBuilder.OpenConfigUi += Commands.ToggleConfig;
+    }
+
+    private unsafe void DrawPost() {
         if ((Globals.DtrDisplay.locationChanged || Globals.ReapplyPreset) && !Globals.Config.EditOverride) {
             ShadowManager* shadowManager = ShadowManager.Instance();
             string continent = "";
@@ -64,8 +56,7 @@ public class Plugin : IDalamudPlugin
 
             Globals.DtrDisplay.locationChanged = false;
 
-            if (Globals.DtrDisplay.currentContinent != null)
-            {
+            if (Globals.DtrDisplay.currentContinent != null) {
                 continent = Globals.DtrDisplay.currentContinent.Name.RawString;
             }
 
@@ -105,15 +96,9 @@ public class Plugin : IDalamudPlugin
         }
     }
 
-    private void DrawUI()
-    {
-        Globals.WindowSystem.Draw();
+    private void DrawUI() {
+        Windows.System.Draw();
         DrawPost();
-    }
-
-    public void ToggleConfig()
-    {
-        ConfigWnd.IsOpen = !ConfigWnd.IsOpen;
     }
 
     private Dictionary<string, ConfigTreeNode> SortConfigDictionaryAndChildren(Dictionary<string, ConfigTreeNode> dictionary) {
@@ -127,76 +112,30 @@ public class Plugin : IDalamudPlugin
         return result;
     }
 
-    [Command("/pbshadows")]
-    [HelpMessage("Toggle configuration window")]
-    public void Command_pbshadows(string command, string args)
-    {
-        ToggleConfig();
-    }
-
-    [Command("/tbshadows")]
-    [HelpMessage("Toggle the functionality")]
-    public void Command_togglebshadows(string command, string args)
-    {
-        Globals.Config.EnabledOverall = !Globals.Config.EnabledOverall;
-
-        if (Globals.Config.EnabledOverall) {
-            CodeManager.DoDisableHacks();
-            CodeManager.DoDisableShadowmap();
-        }
-        else {
-            if (Globals.Config.Enabled) {
-                CodeManager.DoEnableHacks();
-            }
-
-            if (Globals.Config.HigherResShadowmap) {
-                CodeManager.DoEnableShadowmap();
-            }
-        }
-    }
-
-    [Command("/bshedit")]
-    [HelpMessage("Open the preset editor window")]
-    public void Command_toggleeditor(string command, string args) {
-        ConfigWnd.TogglePresetEditorPopout();
-    }
-
-    [Command("/bshlist")]
-    [HelpMessage("Open the preset list window")]
-    public void Command_togglelist(string command, string args) {
-        ConfigWnd.TogglePresetListPopout();
-    }
-
-    [Command("/bshzone")]
-    [HelpMessage("Open the zone editor window")]
-    public void Command_togglezone(string command, string args) {
-        ConfigWnd.TogglePresetZonePopout();
-    }
+    
 
     #region IDisposable Support
-    protected virtual void Dispose(bool disposing)
-    {
-        if (!disposing) return;
+    protected virtual void Dispose(bool disposing) {
+        if (!disposing) {
+            return;
+        }
 
-        PluginInterface.UiBuilder.OpenConfigUi -= ToggleConfig;
-
-        if (Globals.Config.Enabled || Globals.Config.HigherResShadowmap)
-        {
+        if (Globals.Config.Enabled || Globals.Config.HigherResShadowmap) {
             CodeManager.DoDisableHacks();
             CodeManager.DoDisableShadowmap();
         }
-
-        CommandManager.Dispose();
 
         Globals.DtrDisplay.Dispose();
 
         PluginInterface.SavePluginConfig(Globals.Config);
 
-        Globals.WindowSystem.RemoveWindow(ConfigWnd);
+        Windows.Dispose();
+        PluginInterface.UiBuilder.OpenConfigUi -= Commands.ToggleConfig;
+
+        Commands.Dispose();
     }
 
-    public void Dispose()
-    {
+    public void Dispose() {
         Dispose(true);
         GC.SuppressFinalize(this);
     }

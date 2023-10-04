@@ -177,6 +177,7 @@ internal static class ConfigWindowHelpers {
         ImGui.Text("Selected Preset: ");
         ImGui.SameLine();
         ImGui.TextColored(new Vector4(0.8f, 0.8f, 0.0f, 1.0f), Globals.Config.cascades.Name);
+        ImGui.SetNextItemWidth(charX * 10);
         WindowDrawHelpers.DrawFloatInputTooltip(
             "Slider Max",
             ref Globals.Config.SliderMax,
@@ -184,6 +185,7 @@ internal static class ConfigWindowHelpers {
             Globals.Config.cascades.CascadeDistance3,
             32768.0f);
 
+        ImGui.SetNextItemWidth(charX * 10);
         set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
             "Cascade Distance 0",
             ref Globals.Config.cascades.CascadeDistance0,
@@ -191,6 +193,7 @@ internal static class ConfigWindowHelpers {
             0.1f,
             Globals.Config.cascades.CascadeDistance1);
 
+        ImGui.SetNextItemWidth(charX * 10);
         set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
             "Cascade Distance 1",
             ref Globals.Config.cascades.CascadeDistance1,
@@ -198,6 +201,7 @@ internal static class ConfigWindowHelpers {
             Globals.Config.cascades.CascadeDistance0,
             Globals.Config.cascades.CascadeDistance2);
 
+        ImGui.SetNextItemWidth(charX * 10);
         set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
             "Cascade Distance 2",
             ref Globals.Config.cascades.CascadeDistance2,
@@ -205,6 +209,7 @@ internal static class ConfigWindowHelpers {
             Globals.Config.cascades.CascadeDistance1,
             Globals.Config.cascades.CascadeDistance3);
 
+        ImGui.SetNextItemWidth(charX * 10);
         set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
             "Cascade Distance 3",
             ref Globals.Config.cascades.CascadeDistance3,

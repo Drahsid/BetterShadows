@@ -6,8 +6,7 @@ using System.Runtime.InteropServices;
 
 namespace BetterShadows;
 
-internal class CodeManager
-{
+internal class CodeManager {
     private static IntPtr Text_ShadowCascade0 = IntPtr.Zero;
     private static IntPtr Text_ShadowCascade1 = IntPtr.Zero;
     private static IntPtr Text_ShadowCascade2 = IntPtr.Zero;
@@ -28,14 +27,11 @@ internal class CodeManager
     private static bool ShadowmapWasEnabled = false;
     private static int NewShadowmapResolution = 0x00001000;
 
-    public static void ReadWriteCode(IntPtr addr, ref byte[] originalBytes, int byteCount = 5)
-    {
+    public static void ReadWriteCode(IntPtr addr, ref byte[] originalBytes, int byteCount = 5) {
         const byte NOP = 0x90;
-        if (addr != IntPtr.Zero)
-        {
+        if (addr != IntPtr.Zero) {
             MemoryHelper.ChangePermission(addr, byteCount, MemoryProtection.ExecuteReadWrite);
-            for (int index = 0; index < byteCount; index++)
-            {
+            for (int index = 0; index < byteCount; index++) {
                 originalBytes[index] = Marshal.ReadByte(addr + index);
                 Marshal.WriteByte(addr + index, NOP);
             }
@@ -43,13 +39,10 @@ internal class CodeManager
         }
     }
 
-    public static void ReadWriteShadowmapCode(IntPtr addr, ref byte[] originalBytes, int byteCount = 5)
-    {
-        if (addr != IntPtr.Zero)
-        {
+    public static void ReadWriteShadowmapCode(IntPtr addr, ref byte[] originalBytes, int byteCount = 5) {
+        if (addr != IntPtr.Zero) {
             MemoryHelper.ChangePermission(addr, byteCount, MemoryProtection.ExecuteReadWrite);
-            for (int index = 0; index < byteCount; index++)
-            {
+            for (int index = 0; index < byteCount; index++) {
                 originalBytes[index] = Marshal.ReadByte(addr + index);
             }
             Marshal.WriteInt32(addr + 1, NewShadowmapResolution);
@@ -69,37 +62,30 @@ internal class CodeManager
         }
     }
 
-    public static void RestoreCode(IntPtr addr, byte[] originalBytes, int byteCount = 5)
-    {
-        if (addr != IntPtr.Zero)
-        {
+    public static void RestoreCode(IntPtr addr, byte[] originalBytes, int byteCount = 5) {
+        if (addr != IntPtr.Zero) {
             MemoryHelper.ChangePermission(addr, byteCount, MemoryProtection.ExecuteReadWrite);
-            for (int index = 0; index < byteCount; index++)
-            {
+            for (int index = 0; index < byteCount; index++) {
                 Marshal.WriteByte(addr + index, originalBytes[index]);
             }
             MemoryHelper.ChangePermission(addr, byteCount, MemoryProtection.ExecuteRead);
         }
     }
 
-    public static unsafe void RestoreShadowmapCode(IntPtr addr, byte[] originalBytes, int byteCount = 5)
-    {
+    public static unsafe void RestoreShadowmapCode(IntPtr addr, byte[] originalBytes, int byteCount = 5) {
         ShadowManager* shadowManager = ShadowManager.Instance();
 
-        if (addr != IntPtr.Zero)
-        {
+        if (addr != IntPtr.Zero) {
             RestoreCode(addr, originalBytes, byteCount);
             shadowManager->Unk_Bitfield |= 1;
         }
     }
 
-    public static unsafe void DoEnableHacks()
-    {
+    public static unsafe void DoEnableHacks() {
         ShadowManager* shadowManager = ShadowManager.Instance();
 
-        if (shadowManager == null)
-        {
-            PluginLog.Error("shadowManager is null!");
+        if (shadowManager == null) {
+            Service.Logger.Error("shadowManager is null!");
             return;
         }
 
@@ -117,13 +103,11 @@ internal class CodeManager
         HacksWasEnabled = true;
     }
 
-    public static unsafe void DoEnableShadowmap()
-    {
+    public static unsafe void DoEnableShadowmap() {
         ShadowManager* shadowManager = ShadowManager.Instance();
 
-        if (shadowManager == null)
-        {
-            PluginLog.Error("shadowManager is null!");
+        if (shadowManager == null) {
+            Service.Logger.Error("shadowManager is null!");
             return;
         }
 
@@ -141,8 +125,7 @@ internal class CodeManager
         ShadowmapWasEnabled = true;
     }
 
-    public static void DoDisableHacks()
-    {
+    public static void DoDisableHacks() {
         if (HacksWasEnabled) {
             RestoreCode(Text_ShadowCascade0, OriginalBytes_ShadowCascade0);
             RestoreCode(Text_ShadowCascade1, OriginalBytes_ShadowCascade1);
@@ -158,8 +141,7 @@ internal class CodeManager
         HacksWasEnabled = false;
     }
 
-    public static void DoDisableShadowmap()
-    {
+    public static void DoDisableShadowmap() {
         if (ShadowmapWasEnabled) {
             RestoreShadowmapCode(Text_ShadowmapResolution0, OriginalBytes_ShadowmapResolution0);
             RestoreShadowmapCode(Text_ShadowmapResolution1, OriginalBytes_ShadowmapResolution1);

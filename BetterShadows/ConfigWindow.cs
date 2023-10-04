@@ -5,8 +5,7 @@ using DrahsidLib;
 
 namespace BetterShadows;
 
-public class ConfigWindow : WindowWrapper
-{
+public class ConfigWindow : WindowWrapper {
     public static string ConfigWindowName = "Better Shadows Config";
     private static Vector2 MinSize = new Vector2(500, 240);
 
@@ -19,9 +18,16 @@ public class ConfigWindow : WindowWrapper
         PresetListWnd = new PresetListWindow();
         PresetZoneWnd = new PresetZoneListWindow();
 
-        Globals.WindowSystem.AddWindow(PresetEditorWnd);
-        Globals.WindowSystem.AddWindow(PresetListWnd);
-        Globals.WindowSystem.AddWindow(PresetZoneWnd);
+        Windows.System.AddWindow(PresetEditorWnd);
+        Windows.System.AddWindow(PresetListWnd);
+        Windows.System.AddWindow(PresetZoneWnd);
+    }
+
+    public override void Dispose() {
+        Windows.System.RemoveWindow(PresetEditorWnd);
+        Windows.System.RemoveWindow(PresetListWnd);
+        Windows.System.RemoveWindow(PresetZoneWnd);
+        base.Dispose();
     }
 
     public void TogglePresetEditorPopout() {
@@ -158,12 +164,5 @@ public class ConfigWindow : WindowWrapper
                 Globals.Config.EditOverride = set_override;
             }
         }
-    }
-
-    public override void Dispose() {
-        Globals.WindowSystem.RemoveWindow(PresetEditorWnd);
-        Globals.WindowSystem.RemoveWindow(PresetListWnd);
-        Globals.WindowSystem.RemoveWindow(PresetZoneWnd);
-        base.Dispose();
     }
 }
