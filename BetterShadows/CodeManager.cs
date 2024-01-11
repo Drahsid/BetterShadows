@@ -98,7 +98,8 @@ internal class CodeManager {
         }
 
         var ret = InitializeShadowmapHook.Original(thisx, size);
-        InitializeShadowmapNearFarHook.Original(thisx, size);
+
+        //InitializeShadowmapNearFarHook.Original(thisx, size);
         return ret;
     }
 
@@ -118,7 +119,7 @@ internal class CodeManager {
         SizeParam* _size = stackalloc SizeParam[1];
         _size->Width = size;
         _size->Height = size;
-        InitializeShadowmapNearFarHook.OriginalDisposeSafe(rtm, _size);
+        //InitializeShadowmapNearFarHook.OriginalDisposeSafe(rtm, _size);
     }
 
     public static unsafe void EnableShadowCascadeOverride() {
@@ -147,16 +148,16 @@ internal class CodeManager {
             return;
         }
 
-        Text_NearFarShadowmap0 = Service.SigScanner.ScanText("c1 e0 02 89 81 84 02 00 00 48 8b 89 20 01 00 00");
+        /*Text_NearFarShadowmap0 = Service.SigScanner.ScanText("c1 e0 02 89 81 84 02 00 00 48 8b 89 20 01 00 00");
         BytecodeHelper.ReadWriteCode(Text_NearFarShadowmap0 - 15, ref OriginalBytes_NearFarShadowmap0, // do not << 2 NearShadowMap Height
             "90 90 90 90 90 90 90 90 90 8b 82 04 00 00 00 90 90 90 89 81 84 02 00 00"
         );
 
         Text_NearFarShadowmap1 = Service.SigScanner.ScanText("48 8b 4c 24 68 8b 01");
         BytecodeHelper.ReadWriteCode(Text_NearFarShadowmap1 + 7, ref OriginalBytes_NearFarShadowmap1, // Don't do a bunch of funky operations on FarShadowMap
-            //"90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 41 8b 86 8c 02 00 00 c1 e8 02 41 89 86 8c 02 00 00 90 90 90 90 90 90 90 90 90 90" // something about the ratio fixes weird issues in PoTD, but idc, Square should just make it not one massive map
-            "90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90"
-        );
+            "90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 41 8b 86 8c 02 00 00 c1 e8 02 41 89 86 8c 02 00 00 90 90 90 90 90 90 90 90 90 90" // something about the ratio fixes weird issues in PoTD, but idc, Square should just make it not one massive map
+            //"90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90"
+        );*/
 
         var InitializeShadowmapHookPtr0 = Service.SigScanner.ScanText("48 89 5c 24 18 48 89 74 24 20 57 41 56 41 57 48 83 ec 30 48 8b 02 48 8b fa 48 89 81 78 02 00 00");
         var InitializeShadowmapHookPtr1 = Service.SigScanner.ScanText("48 89 54 24 10 53 41 54 41 55 41 56 41 57 48 83 ec 30 ?? ?? ?? ?? ?? ?? ?? 4c 8d a9 80 02 00 00 41 bc 04 00 00 00 4c 8b f1 45 8b fc 44 8b 80 fc 01 00 00 45 3b c4 48 8b 02 49 89 45 00 45 0f 42");
@@ -195,8 +196,8 @@ internal class CodeManager {
 
     public static void DisableShadowmapOverride() {
         if (ShadowmapOverrideEnabled) {
-            BytecodeHelper.RestoreCode(Text_NearFarShadowmap0 - 15, OriginalBytes_NearFarShadowmap0);
-            BytecodeHelper.RestoreCode(Text_NearFarShadowmap1 + 7, OriginalBytes_NearFarShadowmap1);
+            //BytecodeHelper.RestoreCode(Text_NearFarShadowmap0 - 15, OriginalBytes_NearFarShadowmap0);
+            //BytecodeHelper.RestoreCode(Text_NearFarShadowmap1 + 7, OriginalBytes_NearFarShadowmap1);
 
             if (InitializeShadowmapHook != null) {
                 if (!InitializeShadowmapHook.IsDisposed) {

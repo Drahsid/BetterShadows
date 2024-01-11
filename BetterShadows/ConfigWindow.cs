@@ -1,8 +1,8 @@
 ﻿using ImGuiNET;
-using System;
 using System.Numerics;
 using DrahsidLib;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
+using System;
 
 namespace BetterShadows;
 
