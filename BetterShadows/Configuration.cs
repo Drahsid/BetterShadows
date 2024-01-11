@@ -8,6 +8,20 @@ using System.Text;
 
 namespace BetterShadows;
 
+public enum ShadowmapResolution {
+    RES_NONE, // No override
+    RES_64,
+    RES_128,
+    RES_256,
+    RES_512,
+    RES_1024,
+    RES_2048,
+    RES_4096,
+    RES_8192,
+    RES_16384,
+    RES_COUNT
+}
+
 public class CascadeConfig {
     public string Name = "";
     public Guid? GUID = Guid.Empty;
@@ -99,8 +113,8 @@ public class Configuration : IPluginConfiguration {
 
     // this is just here for config upgrades
     [Obsolete] public List<CascadeConfig> cascadePresets = null;
-
-    public bool HigherResShadowmap = true;
+    [Obsolete] public bool HigherResShadowmap = true;
+    public ShadowmapResolution[] ShadowmapSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
     public float SliderMax = 4096.0f;
     public bool Enabled = true;
     public bool EnabledOverall = true;
@@ -108,16 +122,19 @@ public class Configuration : IPluginConfiguration {
     public bool ZoneConfigBeforePreset = false;
     public bool HideTooltips = false;
     public bool ShowContinent = true;
+    public bool OpenInGPose = true;
     #endregion
 
     public string lastSelectedPreset = "";
 
     private List<CascadeConfig> defaultCascadePresets = new List<CascadeConfig> {
-        new CascadeConfig("Seamless", 28, 56, 112, 196),
-        new CascadeConfig("Long Distance", 256, 768, 1536, 3072),
-        new CascadeConfig("Balanced", 40, 116, 265, 2154),
-        new CascadeConfig("Detailed", 13, 34, 64, 138),
-        new CascadeConfig("Compromise", 72, 144, 432, 3072)
+        new CascadeConfig("Seamless (4k)", 28, 56, 112, 196),
+        new CascadeConfig("Long Distance (4k)", 256, 768, 1536, 3072),
+        new CascadeConfig("Balanced (4k)", 40, 116, 265, 2154),
+        new CascadeConfig("Detailed (4k)", 13, 34, 64, 138),
+        new CascadeConfig("Compromise (4k)", 72, 144, 432, 3072),
+        new CascadeConfig("Long Distance (16k)", 96, 288, 864, 2592),
+        new CascadeConfig("Detailed (16k)", 52, 136, 256, 552),
     };
 
     public Configuration() {
@@ -174,6 +191,35 @@ public class Configuration : IPluginConfiguration {
         }
     }
 
+    public void RecoverStockPresets() {
+        foreach (var stock in defaultCascadePresets) {
+            bool recover = true;
+            stock.GUID = Guid.NewGuid();
+            foreach (var preset in shared.cascadePresets) {
+                if (   preset.CascadeDistance0 == stock.CascadeDistance0
+                    && preset.CascadeDistance1 == stock.CascadeDistance1
+                    && preset.CascadeDistance2 == stock.CascadeDistance2
+                    && preset.CascadeDistance3 == stock.CascadeDistance3) {
+                    recover = false;
+                    preset.Name = stock.Name;
+                    Service.ChatGui.Print($"Stock Preset {stock.Name} does not need to be recovered!");
+                    break;
+                }
+
+                if (preset.Name == stock.Name) {
+                    // Settings are not identical at this point
+                    preset.Name = $"{preset.Name}* [{preset.GUID}]";
+                    Service.ChatGui.Print($"Stock Preset {stock.Name} was modified. Renamed to \"{preset.Name}* [{preset.GUID}]\"");
+                }
+            }
+
+            if (recover) {
+                shared.cascadePresets.Add(stock);
+                Service.ChatGui.Print($"Stock Preset {stock.Name} recovered!");
+            }
+        }
+    }
+
     public void ApplyPresetByGuid(Guid presetGuid) {
         foreach (CascadeConfig cascadeConfig in shared.cascadePresets) {
             if (cascadeConfig.GUID == presetGuid) {
@@ -214,11 +260,11 @@ public class Configuration : IPluginConfiguration {
         Save();
 
         if (Enabled) {
-            CodeManager.DoEnableHacks();
+            CodeManager.EnableShadowCascadeOverride();
         }
 
         if (HigherResShadowmap) {
-            CodeManager.DoEnableShadowmap();
+            CodeManager.EnableShadowmapOverride();
         }
     }
 

@@ -1,6 +1,7 @@
 ﻿using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using DrahsidLib;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,6 +14,8 @@ public class Plugin : IDalamudPlugin {
     private IChatGui Chat { get; init; }
     private IClientState ClientState { get; init; }
     private ICommandManager CommandManager { get; init; }
+
+    private bool WasGPosing = false;
 
     public string Name => "Better Shadows";
 
@@ -97,8 +100,28 @@ public class Plugin : IDalamudPlugin {
     }
 
     private void DrawUI() {
+         if (Service.ClientState.IsGPosing != WasGPosing && Service.ClientState.IsGPosing == true) {
+            if (Globals.Config.OpenInGPose) {
+                Windows.Config.IsOpen = true;
+            }
+        }
+
+        WasGPosing = Service.ClientState.IsGPosing;
+
         Windows.System.Draw();
         DrawPost();
+
+        if (Globals.Config.EnabledOverall) {
+             unsafe {
+                 var option = CodeManager.ShadowManager->ShadowmapOption;
+                 if (CodeManager.ShadowmapOverrideEnabled && Globals.Config.ShadowmapSettings[option] == ShadowmapResolution.RES_NONE) {
+                     CodeManager.DisableShadowmapOverride();
+                 }
+                 else if (CodeManager.ShadowmapOverrideEnabled == false && Globals.Config.ShadowmapSettings[option] != ShadowmapResolution.RES_NONE) {
+                     CodeManager.EnableShadowmapOverride();
+                 }
+             }
+        }
     }
 
     private Dictionary<string, ConfigTreeNode> SortConfigDictionaryAndChildren(Dictionary<string, ConfigTreeNode> dictionary) {
@@ -120,11 +143,6 @@ public class Plugin : IDalamudPlugin {
             return;
         }
 
-        if (Globals.Config.Enabled || Globals.Config.HigherResShadowmap) {
-            CodeManager.DoDisableHacks();
-            CodeManager.DoDisableShadowmap();
-        }
-
         Globals.DtrDisplay.Dispose();
 
         PluginInterface.SavePluginConfig(Globals.Config);
@@ -134,6 +152,14 @@ public class Plugin : IDalamudPlugin {
         PluginInterface.UiBuilder.OpenConfigUi -= Commands.ToggleConfig;
 
         Commands.Dispose();
+
+        if (CodeManager.CascadeOverrideEnabled) {
+            CodeManager.DisableShadowCascadeOverride();
+        }
+
+        if (CodeManager.ShadowmapOverrideEnabled) {
+            CodeManager.DisableShadowmapOverride();
+        }
     }
 
     public void Dispose() {

@@ -6,7 +6,9 @@ namespace BetterShadows;
 
 [StructLayout(LayoutKind.Explicit, Size = 0x3E0)]
 public unsafe partial struct ShadowManager {
+    [FieldOffset(0x18)] public int ShadowmapOption;
     [FieldOffset(0x20)] public int Unk_0x20;
+    [FieldOffset(0x24)] public byte Unk_0x24;
     [FieldOffset(0x30)] public float NearDistance;
     [FieldOffset(0x34)] public float FarDistance;
     [FieldOffset(0x38)] public float Bias0;

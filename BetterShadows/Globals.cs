@@ -8,20 +8,26 @@ internal static class Globals {
     public static bool ReapplyPreset = false;
 
     public static void ToggleHacks() {
-        if (Config.Enabled && Config.EnabledOverall) {
-            CodeManager.DoEnableHacks();
+        if (Config.EnabledOverall) {
+            if (Config.Enabled) {
+                CodeManager.EnableShadowCascadeOverride();
+                return;
+            }
         }
-        else {
-            CodeManager.DoDisableHacks();
-        }
+
+        CodeManager.DisableShadowCascadeOverride();
     }
 
-    public static void ToggleShadowmap() {
-        if (Config.HigherResShadowmap && Config.EnabledOverall) {
-            CodeManager.DoEnableShadowmap();
+    public static unsafe void ToggleShadowmap() {
+        if (Config.EnabledOverall) {
+            var option = CodeManager.ShadowManager->ShadowmapOption;
+            var setting = Config.ShadowmapSettings[option];
+            if (setting != ShadowmapResolution.RES_NONE) {
+                CodeManager.EnableShadowmapOverride();
+            }
         }
         else {
-            CodeManager.DoDisableShadowmap();
+            CodeManager.DisableShadowmapOverride();
         }
     }
 }

@@ -56,18 +56,14 @@ internal static class Commands {
         Globals.Config.EnabledOverall = !Globals.Config.EnabledOverall;
 
         if (Globals.Config.EnabledOverall) {
-            CodeManager.DoDisableHacks();
-            CodeManager.DoDisableShadowmap();
+            Service.ChatGui.Print("Better Shadows Enabled"); 
         }
         else {
-            if (Globals.Config.Enabled) {
-                CodeManager.DoEnableHacks();
-            }
-
-            if (Globals.Config.HigherResShadowmap) {
-                CodeManager.DoEnableShadowmap();
-            }
+            Service.ChatGui.Print("Better Shadows Disabled");
         }
+
+        Globals.ToggleHacks();
+        Globals.ToggleShadowmap();
     }
 
     public static void OnBSHEdit(string command, string args) {
