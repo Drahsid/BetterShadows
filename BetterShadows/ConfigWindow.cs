@@ -43,6 +43,16 @@ public class ConfigWindow : WindowWrapper {
         PresetZoneWnd.IsOpen = !PresetZoneWnd.IsOpen;
     }
 
+    private void DrawCascadeToggleCheckbox() {
+        if (WindowDrawHelpers.DrawCheckboxTooltip(
+                "Enable Custom Cascade Values",
+                ref Globals.Config.Enabled,
+                "Enable or disable the usage of custom shadow cascade values. When this is disabled, the Zone Preset Config section is hidden, since it would be unused."))
+        {
+            Globals.ToggleHacks();
+        }
+    }
+
     public override unsafe void Draw() {
         bool set_override = false;
 
@@ -60,6 +70,9 @@ public class ConfigWindow : WindowWrapper {
         WindowDrawHelpers.DrawCheckboxTooltip("Show Window in GPose",
             ref Globals.Config.OpenInGPose,
             "Open configuration window when you begin GPosing");
+
+
+        DrawCascadeToggleCheckbox();
 
         ImGui.Separator();
         
@@ -108,7 +121,6 @@ public class ConfigWindow : WindowWrapper {
         ImGui.Separator();
 
         if (Globals.Config.Enabled) {
-            ImGui.SameLine();
             WindowDrawHelpers.DrawCheckboxTooltip(
                 "Show Continent",
                 ref Globals.Config.ShowContinent,
@@ -153,14 +165,6 @@ public class ConfigWindow : WindowWrapper {
             if (ImGui.Button("Recover Default Presets")) {
                 Globals.Config.RecoverStockPresets();
             }
-
-            if (WindowDrawHelpers.DrawCheckboxTooltip(
-                "Enable Custom Cascade Values",
-                ref Globals.Config.Enabled,
-                "Enable or disable the usage of custom shadow cascade values. When this is disabled, the Zone Preset Config section is hidden, since it would be unused.")) {
-                Globals.ToggleHacks();
-            }
-
 
             string preview = "";
             foreach (CascadeConfig config in Globals.Config.shared.cascadePresets) {
