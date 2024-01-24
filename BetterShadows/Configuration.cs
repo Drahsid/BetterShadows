@@ -127,7 +127,7 @@ public class Configuration : IPluginConfiguration {
 
     public string lastSelectedPreset = "";
 
-    private List<CascadeConfig> defaultCascadePresets = new List<CascadeConfig> {
+    private readonly List<CascadeConfig> defaultCascadePresets = new List<CascadeConfig> {
         new CascadeConfig("Seamless (4k)", 28, 56, 112, 196),
         new CascadeConfig("Long Distance (4k)", 256, 768, 1536, 3072),
         new CascadeConfig("Balanced (4k)", 40, 116, 265, 2154),
@@ -138,16 +138,7 @@ public class Configuration : IPluginConfiguration {
     };
 
     public Configuration() {
-        if (shared == null) {
-            shared = new SharableData();
-            if (cascadePresets != null) {
-                shared.cascadePresets = new List<CascadeConfig>();
-                foreach (CascadeConfig c in cascadePresets) {
-                    shared.cascadePresets.Add(c);
-                }
-                cascadePresets = null;
-            }
-        }
+        Initialize();
     }
 
     public Guid GetZonePresetGUID(string[] keys) {
@@ -235,6 +226,17 @@ public class Configuration : IPluginConfiguration {
     }
 
     public void Initialize() {
+        if (shared == null) {
+            shared = new SharableData();
+            if (cascadePresets != null) {
+                shared.cascadePresets = new List<CascadeConfig>();
+                foreach (CascadeConfig c in cascadePresets) {
+                    shared.cascadePresets.Add(c);
+                }
+                cascadePresets = null;
+            }
+        }
+
         if (shared.cascadePresets == null) {
             shared.cascadePresets = defaultCascadePresets;
         }
@@ -261,10 +263,6 @@ public class Configuration : IPluginConfiguration {
 
         if (Enabled) {
             CodeManager.EnableShadowCascadeOverride();
-        }
-
-        if (HigherResShadowmap) {
-            CodeManager.EnableShadowmapOverride();
         }
     }
 
