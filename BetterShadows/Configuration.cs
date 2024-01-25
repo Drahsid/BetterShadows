@@ -109,10 +109,10 @@ public class Configuration : IPluginConfiguration {
 
     #region Saved configuration values
     public CascadeConfig cascades = new CascadeConfig();
-    public SharableData shared;
+    public SharableData shared = new SharableData();
 
     // this is just here for config upgrades
-    [Obsolete] public List<CascadeConfig> cascadePresets = null;
+    [Obsolete] public List<CascadeConfig>? cascadePresets = null;
     [Obsolete] public bool HigherResShadowmap = true;
     public ShadowmapResolution[] ShadowmapSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
     public float SliderMax = 4096.0f;
@@ -136,10 +136,6 @@ public class Configuration : IPluginConfiguration {
         new CascadeConfig("Long Distance (16k)", 96, 288, 864, 2592),
         new CascadeConfig("Detailed (16k)", 52, 136, 256, 552),
     };
-
-    public Configuration() {
-        Initialize();
-    }
 
     public Guid GetZonePresetGUID(string[] keys) {
         string key = keys[0];
@@ -228,16 +224,17 @@ public class Configuration : IPluginConfiguration {
     public void Initialize() {
         if (shared == null) {
             shared = new SharableData();
-            if (cascadePresets != null) {
+            if (cascadePresets is not null) {
                 shared.cascadePresets = new List<CascadeConfig>();
                 foreach (CascadeConfig c in cascadePresets) {
                     shared.cascadePresets.Add(c);
+                    Service.Logger.Info($"Added {c.Name}");
                 }
                 cascadePresets = null;
             }
         }
 
-        if (shared.cascadePresets == null) {
+        if (shared.cascadePresets is null) {
             shared.cascadePresets = defaultCascadePresets;
         }
 
