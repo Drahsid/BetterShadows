@@ -112,15 +112,16 @@ public class Plugin : IDalamudPlugin {
         DrawPost();
 
         if (Globals.Config.EnabledOverall) {
-             unsafe {
-                 var option = CodeManager.ShadowManager->ShadowmapOption;
-                 if (CodeManager.ShadowmapOverrideEnabled && Globals.Config.ShadowmapSettings[option] == ShadowmapResolution.RES_NONE) {
-                     CodeManager.DisableShadowmapOverride();
-                 }
-                 else if (CodeManager.ShadowmapOverrideEnabled == false && Globals.Config.ShadowmapSettings[option] != ShadowmapResolution.RES_NONE) {
-                     CodeManager.EnableShadowmapOverride();
-                 }
-             }
+            unsafe {
+                var shadowManager = CodeManager.ShadowManager;
+                var option = CodeManager.ShadowManager->ShadowmapOption;
+                if (CodeManager.ShadowmapOverrideEnabled && Globals.Config.ShadowmapSettings[option] == ShadowmapResolution.RES_NONE) {
+                    CodeManager.DisableShadowmapOverride();
+                }
+                else if (CodeManager.ShadowmapOverrideEnabled == false && Globals.Config.ShadowmapSettings[option] != ShadowmapResolution.RES_NONE) {
+                    CodeManager.EnableShadowmapOverride();
+                }
+            }
         }
     }
 

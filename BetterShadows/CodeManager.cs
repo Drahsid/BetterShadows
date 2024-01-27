@@ -12,7 +12,7 @@ internal struct SizeParam {
     public int Height;
 }
 
-internal class CodeManager {
+internal static class CodeManager {
     private static IntPtr Text_ShadowCascade0 = IntPtr.Zero;
     private static IntPtr Text_ShadowCascade1 = IntPtr.Zero;
     private static IntPtr Text_ShadowCascade2 = IntPtr.Zero;
@@ -30,8 +30,25 @@ internal class CodeManager {
     public static bool CascadeOverrideEnabled = false;
     public static bool ShadowmapOverrideEnabled = false;
 
-    private static unsafe RenderTargetManagerUpdated* rtm = null;
-    public static unsafe ShadowManager* ShadowManager = null;
+    private static unsafe RenderTargetManagerUpdated* _rtm = null;
+    private static unsafe RenderTargetManagerUpdated* rtm {
+        get {
+            if (_rtm == null) {
+                _rtm = (RenderTargetManagerUpdated*)RenderTargetManager.Instance();
+            }
+            return _rtm;
+        }
+    }
+
+    private static unsafe ShadowManager* _shadowManager = null;
+    public static unsafe ShadowManager* ShadowManager {
+        get {
+            if (_shadowManager == null) {
+                _shadowManager = BetterShadows.ShadowManager.Instance();
+            }
+            return _shadowManager;
+        }
+    }
 
 
     [return: MarshalAs(UnmanagedType.U1)]
@@ -123,8 +140,6 @@ internal class CodeManager {
     }
 
     public static unsafe void EnableShadowCascadeOverride() {
-        ShadowManager = BetterShadows.ShadowManager.Instance();
-
         // if regalloc ever changes, these will fail; may be better to hijack the whole function
         Text_ShadowCascade0 = Service.SigScanner.ScanText("F3 0F 11 ?? ?? F3 44 0F 5C EC");
         Text_ShadowCascade1 = Service.SigScanner.ScanText("F3 0F 11 ?? ?? F3 41 0F 58 D8 F3 0F 11 57 ??");
@@ -141,9 +156,6 @@ internal class CodeManager {
     }
 
     public static unsafe void EnableShadowmapOverride() {
-        ShadowManager = BetterShadows.ShadowManager.Instance();
-        rtm = (RenderTargetManagerUpdated*)RenderTargetManager.Instance();
-
         if (ShadowmapOverrideEnabled) {
             return;
         }
@@ -225,7 +237,6 @@ internal class CodeManager {
     }
 
     public static unsafe void ReinitializeShadowmap() {
-        ShadowManager = BetterShadows.ShadowManager.Instance();
         ShadowManager->Unk_Bitfield |= 1; // reinitializes shadowmap next frame
 
         var option = ShadowManager->ShadowmapOption;
