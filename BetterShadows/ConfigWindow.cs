@@ -74,6 +74,10 @@ public class ConfigWindow : WindowWrapper {
 
         DrawCascadeToggleCheckbox();
 
+        if (ImGui.Button("Save")) {
+            Globals.Config.Save();
+        }
+
         ImGui.Separator();
         
         if (ImGui.BeginCombo("Shadowmap Res Override: High", Globals.Config.ShadowmapSettings[2].ToString())) {

@@ -146,7 +146,7 @@ public class Plugin : IDalamudPlugin {
 
         Globals.DtrDisplay.Dispose();
 
-        PluginInterface.SavePluginConfig(Globals.Config);
+        Globals.Config.Save();
 
         PluginInterface.UiBuilder.Draw -= DrawUI;
         Windows.Dispose();
