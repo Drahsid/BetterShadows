@@ -1,8 +1,8 @@
 ﻿using DrahsidLib;
 using Lumina.Excel.GeneratedSheets;
 using System;
-using FFXIVClientStructs.FFXIV.Client.Game.Housing;
 using Dalamud.Plugin.Services;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace BetterShadows;
@@ -63,17 +63,17 @@ public unsafe class DtrDisplay : IDisposable {
     }
 
     private void UpdateSubArea() {
-        if (lastSubArea != territoryInfo->SubAreaPlaceNameID) {
-            lastSubArea = territoryInfo->SubAreaPlaceNameID;
-            currentSubArea = GetPlaceName(territoryInfo->SubAreaPlaceNameID);
+        if (lastSubArea != territoryInfo->SubAreaPlaceNameId) {
+            lastSubArea = territoryInfo->SubAreaPlaceNameId;
+            currentSubArea = GetPlaceName(territoryInfo->SubAreaPlaceNameId);
             locationChanged = true;
         }
     }
 
     private void UpdateRegion() {
-        if (lastRegion != territoryInfo->AreaPlaceNameID) {
-            lastRegion = territoryInfo->AreaPlaceNameID;
-            currentRegion = GetPlaceName(territoryInfo->AreaPlaceNameID);
+        if (lastRegion != territoryInfo->AreaPlaceNameId) {
+            lastRegion = territoryInfo->AreaPlaceNameId;
+            currentRegion = GetPlaceName(territoryInfo->AreaPlaceNameId);
             locationChanged = true;
         }
     }

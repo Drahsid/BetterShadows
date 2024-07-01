@@ -3,6 +3,7 @@ using System.Numerics;
 using DrahsidLib;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using System;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 
 namespace BetterShadows;
 
@@ -56,12 +57,13 @@ public class ConfigWindow : WindowWrapper {
     public override unsafe void Draw() {
         bool set_override = false;
 
-        /*var _rtm = RenderTargetManager.Instance();
+        var _rtm = RenderTargetManager.Instance();
         RenderTargetManagerUpdated* rtm = (RenderTargetManagerUpdated*)_rtm;
         ImGui.Text($"{(IntPtr)(&rtm->ShadowMap_Width):X}");
         ImGui.Text($"Shadowmap: {rtm->ShadowMap_Width}, {rtm->ShadowMap_Height}");
         ImGui.Text($"Near Shadowmap: {rtm->NearShadowMap_Width}, {rtm->NearShadowMap_Height}");
-        ImGui.Text($"Far Shadowmap: {rtm->FarShadowMap_Width}, {rtm->FarShadowMap_Height}");*/
+        ImGui.Text($"Far Shadowmap: {rtm->FarShadowMap_Width}, {rtm->FarShadowMap_Height}");
+        ImGui.Text($"Unk Shadowmap: {rtm->UnkShadowMap_Width}, {rtm->UnkShadowMap_Height}");
 
         WindowDrawHelpers.DrawCheckboxTooltip("Hide tooltips",
             ref Globals.Config.HideTooltips,

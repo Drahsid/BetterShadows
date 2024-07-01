@@ -10,7 +10,7 @@ using System.Linq;
 namespace BetterShadows;
 
 public class Plugin : IDalamudPlugin {
-    private DalamudPluginInterface PluginInterface;
+    private IDalamudPluginInterface PluginInterface;
     private IChatGui Chat { get; init; }
     private IClientState ClientState { get; init; }
     private ICommandManager CommandManager { get; init; }
@@ -19,7 +19,7 @@ public class Plugin : IDalamudPlugin {
 
     public string Name => "Better Shadows";
 
-    public Plugin(DalamudPluginInterface pluginInterface, ICommandManager commandManager, IChatGui chat, IClientState clientState) {
+    public Plugin(IDalamudPluginInterface pluginInterface, ICommandManager commandManager, IChatGui chat, IClientState clientState) {
         PluginInterface = pluginInterface;
         Chat = chat;
         ClientState = clientState;
