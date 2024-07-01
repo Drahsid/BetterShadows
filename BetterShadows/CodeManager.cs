@@ -144,9 +144,6 @@ internal static class CodeManager {
                 break;
         }
 
-        // make sure the other nonsense happens
-        InitializeShadowmapNearFarHook.Original(thisx, _size);
-
         thisx->NearShadowMap_Width = Globals.Config.ForceNearMapX;
         thisx->NearShadowMap_Height = Globals.Config.ForceNearMapY;
 
@@ -159,7 +156,7 @@ internal static class CodeManager {
         // then reconstruct the actual shadowmaps
         byte near = RenderTargetManagerUpdated.InitializeNearShadowmap(thisx, Globals.Config.ForceNearMapX, Globals.Config.ForceNearMapY);
         byte far = RenderTargetManagerUpdated.InitializeFarShadowmap(thisx, Globals.Config.ForceFarMapX, Globals.Config.ForceFarMapY);
-        byte unk = RenderTargetManagerUpdated.InitializeUnkShadowmap(thisx, Globals.Config.ForceUnkMapX, Globals.Config.ForceUnkMapY);
+        byte unk = RenderTargetManagerUpdated.InitializeDistanceShadowmap(thisx, Globals.Config.ForceUnkMapX, Globals.Config.ForceUnkMapY);
 
         if (near != 0 && far != 0 && unk != 0)
         {

@@ -12,13 +12,13 @@ public unsafe partial struct RenderTargetManagerUpdated {
     [FieldOffset(0x130)] public Texture* ShadowMapTexture2;
     [FieldOffset(0x138)] public Texture* ShadowMapTexture3;
 
-    [FieldOffset(0x158)] public Texture* ShadowMapTexture4; // near 1
+    [FieldOffset(0x158)] public Texture* ShadowMapTextureNear;
     [FieldOffset(0x160)] public Texture* ShadowMapTexture_Near0; // These are initialized in a loop
     [FieldOffset(0x168)] public Texture* ShadowMapTexture_Near1;
     [FieldOffset(0x170)] public Texture* ShadowMapTexture_Near2;
     [FieldOffset(0x178)] public Texture* ShadowMapTexture_Near3;
 
-    [FieldOffset(0x180)] public Texture* ShadowMapTexture5; // far 1
+    [FieldOffset(0x180)] public Texture* ShadowMapTextureFar;
     [FieldOffset(0x188)] public Texture* ShadowMapTexture_Far00; // These are initialized in a loop
     [FieldOffset(0x190)] public Texture* ShadowMapTexture_Far01;
     [FieldOffset(0x198)] public Texture* ShadowMapTexture_Far02;
@@ -40,11 +40,11 @@ public unsafe partial struct RenderTargetManagerUpdated {
     [FieldOffset(0x218)] public Texture* ShadowMapTexture_Far12;
     [FieldOffset(0x220)] public Texture* ShadowMapTexture_Far13;
 
-    [FieldOffset(0x228)] public Texture* ShadowMapTexture7;
-    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Unk0;
-    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Unk1;
-    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Unk2;
-    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Unk3;
+    [FieldOffset(0x228)] public Texture* ShadowMapTextureDistance;
+    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Distance0;
+    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Distance1;
+    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Distance2;
+    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Distance3;
 
     [FieldOffset(0x430)] public int Resolution_Width;
     [FieldOffset(0x434)] public int Resolution_Height;
@@ -152,10 +152,10 @@ public unsafe partial struct RenderTargetManagerUpdated {
             thisx->NearShadowMap_Height = sizeY;
 
             // decref existing textures before we assign the new ones
-            if (thisx->ShadowMapTexture4 != null)
+            if (thisx->ShadowMapTextureNear != null)
             {
-                thisx->ShadowMapTexture4->DecRef();
-                thisx->ShadowMapTexture4 = null;
+                thisx->ShadowMapTextureNear->DecRef();
+                thisx->ShadowMapTextureNear = null;
             }
 
             if (thisx->ShadowMapTexture_Near0 != null)
@@ -182,7 +182,7 @@ public unsafe partial struct RenderTargetManagerUpdated {
                 thisx->ShadowMapTexture_Near3 = null;
             }
 
-            thisx->ShadowMapTexture4 = texture0;
+            thisx->ShadowMapTextureNear = texture0;
             thisx->ShadowMapTexture_Near0 = texture1;
             thisx->ShadowMapTexture_Near1 = texture2;
             thisx->ShadowMapTexture_Near2 = texture3;
@@ -257,10 +257,10 @@ public unsafe partial struct RenderTargetManagerUpdated {
             thisx->FarShadowMap_Height = sizeY;
 
             // decref existing textures before we assign the new ones
-            if (thisx->ShadowMapTexture5 != null)
+            if (thisx->ShadowMapTextureFar != null)
             {
-                thisx->ShadowMapTexture5->DecRef();
-                thisx->ShadowMapTexture5 = null;
+                thisx->ShadowMapTextureFar->DecRef();
+                thisx->ShadowMapTextureFar = null;
             }
 
             if (thisx->ShadowMapTexture_Far00 != null)
@@ -383,7 +383,7 @@ public unsafe partial struct RenderTargetManagerUpdated {
                 thisx->ShadowMapTexture_Far13 = null;
             }
 
-            thisx->ShadowMapTexture5 = texture0;
+            thisx->ShadowMapTextureFar = texture0;
             thisx->ShadowMapTexture_Far00 = texture1;
             thisx->ShadowMapTexture_Far01 = texture2;
             thisx->ShadowMapTexture_Far02 = texture3;
@@ -519,7 +519,7 @@ public unsafe partial struct RenderTargetManagerUpdated {
         }
     }
 
-    public static unsafe byte InitializeUnkShadowmap(RenderTargetManagerUpdated* thisx, int sizeX, int sizeY)
+    public static unsafe byte InitializeDistanceShadowmap(RenderTargetManagerUpdated* thisx, int sizeX, int sizeY)
     {
         int* width_height = stackalloc int[2];
 
@@ -538,41 +538,41 @@ public unsafe partial struct RenderTargetManagerUpdated {
             thisx->UnkShadowMap_Height = sizeY;
 
             // decref existing textures before we assign the new ones
-            if (thisx->ShadowMapTexture7 != null)
+            if (thisx->ShadowMapTextureDistance != null)
             {
-                thisx->ShadowMapTexture7->DecRef();
-                thisx->ShadowMapTexture7 = null;
+                thisx->ShadowMapTextureDistance->DecRef();
+                thisx->ShadowMapTextureDistance = null;
             }
 
-            if (thisx->ShadowMapTexture_Unk0 != null)
+            if (thisx->ShadowMapTexture_Distance0 != null)
             {
-                thisx->ShadowMapTexture_Unk0->DecRef();
-                thisx->ShadowMapTexture_Unk0 = null;
+                thisx->ShadowMapTexture_Distance0->DecRef();
+                thisx->ShadowMapTexture_Distance0 = null;
             }
 
-            if (thisx->ShadowMapTexture_Unk1 != null)
+            if (thisx->ShadowMapTexture_Distance1 != null)
             {
-                thisx->ShadowMapTexture_Unk1->DecRef();
-                thisx->ShadowMapTexture_Unk1 = null;
+                thisx->ShadowMapTexture_Distance1->DecRef();
+                thisx->ShadowMapTexture_Distance1 = null;
             }
 
-            if (thisx->ShadowMapTexture_Unk2 != null)
+            if (thisx->ShadowMapTexture_Distance2 != null)
             {
-                thisx->ShadowMapTexture_Unk2->DecRef();
-                thisx->ShadowMapTexture_Unk2 = null;
+                thisx->ShadowMapTexture_Distance2->DecRef();
+                thisx->ShadowMapTexture_Distance2 = null;
             }
 
-            if (thisx->ShadowMapTexture_Unk3 != null)
+            if (thisx->ShadowMapTexture_Distance3 != null)
             {
-                thisx->ShadowMapTexture_Unk3->DecRef();
-                thisx->ShadowMapTexture_Unk3 = null;
+                thisx->ShadowMapTexture_Distance3->DecRef();
+                thisx->ShadowMapTexture_Distance3 = null;
             }
 
-            thisx->ShadowMapTexture7 = texture0;
-            thisx->ShadowMapTexture_Unk0 = texture1;
-            thisx->ShadowMapTexture_Unk1 = texture2;
-            thisx->ShadowMapTexture_Unk2 = texture3;
-            thisx->ShadowMapTexture_Unk3 = texture4;
+            thisx->ShadowMapTextureDistance = texture0;
+            thisx->ShadowMapTexture_Distance0 = texture1;
+            thisx->ShadowMapTexture_Distance1 = texture2;
+            thisx->ShadowMapTexture_Distance2 = texture3;
+            thisx->ShadowMapTexture_Distance3 = texture4;
 
             return 1;
         }
