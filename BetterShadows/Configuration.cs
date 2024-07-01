@@ -114,6 +114,19 @@ public class Configuration : IPluginConfiguration {
     // this is just here for config upgrades
     [Obsolete] public List<CascadeConfig>? cascadePresets = null;
     [Obsolete] public bool HigherResShadowmap = true;
+
+    public int ForceMapX = 512;
+    public int ForceMapY = 2560;
+
+    public int ForceNearMapX = 2048;
+    public int ForceNearMapY = 2048;
+
+    public int ForceFarMapX = 1024;
+    public int ForceFarMapY = 1024;
+
+    public int ForceUnkMapX = 4096;
+    public int ForceUnkMapY = 1024;
+
     public ShadowmapResolution[] ShadowmapSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
     public float SliderMax = 4096.0f;
     public bool Enabled = true;

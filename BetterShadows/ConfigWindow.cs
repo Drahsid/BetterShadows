@@ -65,6 +65,23 @@ public class ConfigWindow : WindowWrapper {
         ImGui.Text($"Far Shadowmap: {rtm->FarShadowMap_Width}, {rtm->FarShadowMap_Height}");
         ImGui.Text($"Unk Shadowmap: {rtm->UnkShadowMap_Width}, {rtm->UnkShadowMap_Height}");
 
+        ImGui.InputInt("Map X", ref Globals.Config.ForceMapX);
+        ImGui.InputInt("Map Y", ref Globals.Config.ForceMapY);
+
+        ImGui.InputInt("Near Map X", ref Globals.Config.ForceNearMapX);
+        ImGui.InputInt("Near Map Y", ref Globals.Config.ForceNearMapY);
+
+        ImGui.InputInt("Far Map X", ref Globals.Config.ForceFarMapX); 
+        ImGui.InputInt("Far Map Y", ref Globals.Config.ForceFarMapY);
+
+        ImGui.InputInt("Unk Map X", ref Globals.Config.ForceUnkMapX);
+        ImGui.InputInt("Unk Map Y", ref Globals.Config.ForceUnkMapY);
+
+        if (ImGui.Button("Reinit"))
+        {
+            CodeManager.ReinitializeShadowmap();
+        }
+        
         WindowDrawHelpers.DrawCheckboxTooltip("Hide tooltips",
             ref Globals.Config.HideTooltips,
             "Hide tooltips when hovering over settings.");

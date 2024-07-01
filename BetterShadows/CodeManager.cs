@@ -96,7 +96,12 @@ internal static class CodeManager {
                 break;
         }
 
-        return RenderTargetManagerUpdated.InitializeShadowmap(thisx, size);
+        var ret = RenderTargetManagerUpdated.InitializeShadowmap(thisx, Globals.Config.ForceMapX, Globals.Config.ForceMapY);
+
+        thisx->ShadowMap_Width = Globals.Config.ForceMapX;
+        thisx->ShadowMap_Height = Globals.Config.ForceMapY;
+
+        return ret;
     }
 
     private static unsafe byte InitializeShadowmapNearFar(RenderTargetManagerUpdated* thisx, SizeParam* _size) {
@@ -142,10 +147,19 @@ internal static class CodeManager {
         // make sure the other nonsense happens
         InitializeShadowmapNearFarHook.Original(thisx, _size);
 
+        thisx->NearShadowMap_Width = Globals.Config.ForceNearMapX;
+        thisx->NearShadowMap_Height = Globals.Config.ForceNearMapY;
+
+        thisx->FarShadowMap_Width = Globals.Config.ForceFarMapX;
+        thisx->FarShadowMap_Height = Globals.Config.ForceFarMapY;
+
+        thisx->UnkShadowMap_Width = Globals.Config.ForceUnkMapX;
+        thisx->UnkShadowMap_Height = Globals.Config.ForceUnkMapY;
+
         // then reconstruct the actual shadowmaps
-        byte near = RenderTargetManagerUpdated.InitializeNearShadowmap(thisx, size);
-        byte far = RenderTargetManagerUpdated.InitializeFarShadowmap(thisx, size);
-        byte unk = RenderTargetManagerUpdated.InitializeUnkShadowmap(thisx, size);
+        byte near = RenderTargetManagerUpdated.InitializeNearShadowmap(thisx, Globals.Config.ForceNearMapX, Globals.Config.ForceNearMapY);
+        byte far = RenderTargetManagerUpdated.InitializeFarShadowmap(thisx, Globals.Config.ForceFarMapX, Globals.Config.ForceFarMapY);
+        byte unk = RenderTargetManagerUpdated.InitializeUnkShadowmap(thisx, Globals.Config.ForceUnkMapX, Globals.Config.ForceUnkMapY);
 
         if (near != 0 && far != 0 && unk != 0)
         {
@@ -153,13 +167,6 @@ internal static class CodeManager {
         }
 
         return 0;
-    }
-
-    private static unsafe void InvokeInitializeShadowmapNearFar(int size) {
-        SizeParam* _size = stackalloc SizeParam[1];
-        _size->Width = size;
-        _size->Height = size;
-        //InitializeShadowmapNearFarHook.OriginalDisposeSafe(rtm, _size);
     }
 
     public static unsafe void EnableShadowCascadeOverride() {
@@ -258,7 +265,7 @@ internal static class CodeManager {
                 if (!InitializeShadowmapNearFarHook.IsDisposed) {
                     if (InitializeShadowmapNearFarHook.IsEnabled) {
                         InitializeShadowmapNearFarHook.Disable();
-                        InvokeInitializeShadowmapNearFar(0x200); // revert to default
+                        // revert to default
                     }
                     InitializeShadowmapNearFarHook.Dispose();
                 }
@@ -275,7 +282,7 @@ internal static class CodeManager {
 
         var option = ShadowManager->ShadowmapOption;
         if (Globals.Config.ShadowmapSettings[option] == ShadowmapResolution.RES_NONE) {
-            InvokeInitializeShadowmapNearFar(0x200); // revert to default
+            // revert to default
         }
     }
 }
