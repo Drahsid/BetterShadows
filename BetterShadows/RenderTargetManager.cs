@@ -41,7 +41,10 @@ public unsafe partial struct RenderTargetManagerUpdated {
     [FieldOffset(0x220)] public Texture* ShadowMapTexture_Far13;
 
     [FieldOffset(0x228)] public Texture* ShadowMapTexture7;
-    [FieldOffset(0x230)] public Texture* ShadowMapTexture8;
+    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Unk0;
+    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Unk1;
+    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Unk2;
+    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Unk3;
 
     [FieldOffset(0x430)] public int Resolution_Width;
     [FieldOffset(0x434)] public int Resolution_Height;
@@ -525,6 +528,9 @@ public unsafe partial struct RenderTargetManagerUpdated {
 
         Texture* texture0 = Device.Instance()->CreateTexture2D(&width_height[0], 1, 0x5100, 0x100000, 3);
         Texture* texture1 = Device.Instance()->CreateTexture2D(&width_height[0], 1, 0x5140, 0x200000, 3);
+        Texture* texture2 = Device.Instance()->CreateTexture2D(&width_height[0], 1, 0x5140, 0x200000, 3);
+        Texture* texture3 = Device.Instance()->CreateTexture2D(&width_height[0], 1, 0x5140, 0x200000, 3);
+        Texture* texture4 = Device.Instance()->CreateTexture2D(&width_height[0], 1, 0x5140, 0x200000, 3);
 
         if (texture0 != null && texture1 != null)
         {
@@ -538,14 +544,35 @@ public unsafe partial struct RenderTargetManagerUpdated {
                 thisx->ShadowMapTexture7 = null;
             }
 
-            if (thisx->ShadowMapTexture8 != null)
+            if (thisx->ShadowMapTexture_Unk0 != null)
             {
-                thisx->ShadowMapTexture8->DecRef();
-                thisx->ShadowMapTexture8 = null;
+                thisx->ShadowMapTexture_Unk0->DecRef();
+                thisx->ShadowMapTexture_Unk0 = null;
+            }
+
+            if (thisx->ShadowMapTexture_Unk1 != null)
+            {
+                thisx->ShadowMapTexture_Unk1->DecRef();
+                thisx->ShadowMapTexture_Unk1 = null;
+            }
+
+            if (thisx->ShadowMapTexture_Unk2 != null)
+            {
+                thisx->ShadowMapTexture_Unk2->DecRef();
+                thisx->ShadowMapTexture_Unk2 = null;
+            }
+
+            if (thisx->ShadowMapTexture_Unk3 != null)
+            {
+                thisx->ShadowMapTexture_Unk3->DecRef();
+                thisx->ShadowMapTexture_Unk3 = null;
             }
 
             thisx->ShadowMapTexture7 = texture0;
-            thisx->ShadowMapTexture8 = texture1;
+            thisx->ShadowMapTexture_Unk0 = texture1;
+            thisx->ShadowMapTexture_Unk1 = texture2;
+            thisx->ShadowMapTexture_Unk2 = texture3;
+            thisx->ShadowMapTexture_Unk3 = texture4;
 
             return 1;
         }
@@ -560,6 +587,21 @@ public unsafe partial struct RenderTargetManagerUpdated {
             if (texture1 != null)
             {
                 texture1->DecRef();
+            }
+
+            if (texture2 != null)
+            {
+                texture2->DecRef();
+            }
+
+            if (texture3 != null)
+            {
+                texture3->DecRef();
+            }
+
+            if (texture4 != null)
+            {
+                texture4->DecRef();
             }
 
             return 0;
