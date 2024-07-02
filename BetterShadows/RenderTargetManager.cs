@@ -54,8 +54,8 @@ public unsafe partial struct RenderTargetManagerUpdated {
     [FieldOffset(0x444)] public int NearShadowMap_Height;
     [FieldOffset(0x448)] public int FarShadowMap_Width;
     [FieldOffset(0x44C)] public int FarShadowMap_Height;
-    [FieldOffset(0x450)] public int UnkShadowMap_Width;
-    [FieldOffset(0x454)] public int UnkShadowMap_Height;
+    [FieldOffset(0x450)] public int DistanceShadowMap_Width;
+    [FieldOffset(0x454)] public int DistanceShadowMap_Height;
 
     public static unsafe byte InitializeShadowmap(RenderTargetManagerUpdated* thisx, int sizeX, int sizeY)
     {
@@ -534,8 +534,8 @@ public unsafe partial struct RenderTargetManagerUpdated {
 
         if (texture0 != null && texture1 != null)
         {
-            thisx->UnkShadowMap_Width = sizeX;
-            thisx->UnkShadowMap_Height = sizeY;
+            thisx->DistanceShadowMap_Width = sizeX;
+            thisx->DistanceShadowMap_Height = sizeY;
 
             // decref existing textures before we assign the new ones
             if (thisx->ShadowMapTextureDistance != null)

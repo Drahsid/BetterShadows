@@ -13,22 +13,12 @@ internal struct SizeParam {
 }
 
 internal static class CodeManager {
-    private static IntPtr Text_ShadowCascade0 = IntPtr.Zero;
-    private static IntPtr Text_ShadowCascade1 = IntPtr.Zero;
-    private static IntPtr Text_ShadowCascade2 = IntPtr.Zero;
-    private static IntPtr Text_ShadowCascade3 = IntPtr.Zero;
-    private static byte[] OriginalBytes_ShadowCascade0 = new byte[32];
-    private static byte[] OriginalBytes_ShadowCascade1 = new byte[32];
-    private static byte[] OriginalBytes_ShadowCascade2 = new byte[32];
-    private static byte[] OriginalBytes_ShadowCascade3 = new byte[32];
-
+    private static IntPtr Text_ShadowCascade = IntPtr.Zero;
     private static IntPtr Text_NearFarShadowmap0 = IntPtr.Zero;
     private static IntPtr Text_NearFarShadowmap1 = IntPtr.Zero;
-    private static byte[] OriginalBytes_NearFarShadowmap0 = new byte[32];
-    private static byte[] OriginalBytes_NearFarShadowmap1 = new byte[256];
 
     public static bool CascadeOverrideEnabled = false;
-    public static bool ShadowmapOverrideEnabled = false;
+    public static bool ShadowMapOverrideEnabled = false;
 
     private static unsafe RenderTargetManagerUpdated* _rtm = null;
     private static unsafe RenderTargetManagerUpdated* rtm {
@@ -54,66 +44,26 @@ internal static class CodeManager {
     [return: MarshalAs(UnmanagedType.U1)]
     private unsafe delegate byte RenderTargetManager_InitializeShadowmapDelegate(RenderTargetManagerUpdated* thisx, SizeParam* size);
 
-    private static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowmapHook { get; set; } = null!;
-    private static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowmapNearFarHook { get; set; } = null!;
+    private unsafe delegate void ShadowManager_UpdateCascadeValuesDelegate(ShadowManager* thisx, float unk1);
 
-    private static unsafe byte InitializeShadowmap(RenderTargetManagerUpdated* thisx, SizeParam* _size) {
-        var option = ShadowManager->ShadowmapOption;
-        var setting = Globals.Config.ShadowmapSettings[option];
+    private static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowMapHook { get; set; } = null!;
+    private static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowMapNearFarHook { get; set; } = null!;
+
+    private static Hook<ShadowManager_UpdateCascadeValuesDelegate>? UpdateCascadeValuesHook { get; set; } = null!;
+
+    private unsafe static SizeParam GetShadowmapSettingSize(ShadowmapResolution setting, SizeParam* _size)
+    {
+        SizeParam sizeXY = new SizeParam();
         int size = 1024;
-
-        switch (setting) {
-            default:
-            case ShadowmapResolution.RES_NONE:
-                size = _size->Width;
-                break;
-            case ShadowmapResolution.RES_64:
-                size = 64;
-                break;
-            case ShadowmapResolution.RES_128:
-                size = 128;
-                break;
-            case ShadowmapResolution.RES_256:
-                size = 256;
-                break;
-            case ShadowmapResolution.RES_512:
-                size = 512;
-                break;
-            case ShadowmapResolution.RES_1024:
-                size = 1024;
-                break;
-            case ShadowmapResolution.RES_2048:
-                size = 2048;
-                break;
-            case ShadowmapResolution.RES_4096:
-                size = 4096;
-                break;
-            case ShadowmapResolution.RES_8192:
-                size = 8192;
-                break;
-            case ShadowmapResolution.RES_16384:
-                size = 16384;
-                break;
-        }
-
-        var ret = RenderTargetManagerUpdated.InitializeShadowmap(thisx, Globals.Config.ForceMapX, Globals.Config.ForceMapY);
-
-        thisx->ShadowMap_Width = Globals.Config.ForceMapX;
-        thisx->ShadowMap_Height = Globals.Config.ForceMapY;
-
-        return ret;
-    }
-
-    private static unsafe byte InitializeShadowmapNearFar(RenderTargetManagerUpdated* thisx, SizeParam* _size) {
-        var option = ShadowManager->ShadowmapOption;
-        var setting = Globals.Config.ShadowmapSettings[option];
-        int size = 1024;
+        bool set = true;
 
         switch (setting)
         {
             default:
             case ShadowmapResolution.RES_NONE:
-                size = _size->Width;
+                sizeXY.Width = _size->Width;
+                sizeXY.Height = _size->Height;
+                set = false;
                 break;
             case ShadowmapResolution.RES_64:
                 size = 64;
@@ -144,142 +94,256 @@ internal static class CodeManager {
                 break;
         }
 
-        thisx->NearShadowMap_Width = Globals.Config.ForceNearMapX;
-        thisx->NearShadowMap_Height = Globals.Config.ForceNearMapY;
-
-        thisx->FarShadowMap_Width = Globals.Config.ForceFarMapX;
-        thisx->FarShadowMap_Height = Globals.Config.ForceFarMapY;
-
-        thisx->UnkShadowMap_Width = Globals.Config.ForceUnkMapX;
-        thisx->UnkShadowMap_Height = Globals.Config.ForceUnkMapY;
-
-        // then reconstruct the actual shadowmaps
-        byte near = RenderTargetManagerUpdated.InitializeNearShadowmap(thisx, Globals.Config.ForceNearMapX, Globals.Config.ForceNearMapY);
-        byte far = RenderTargetManagerUpdated.InitializeFarShadowmap(thisx, Globals.Config.ForceFarMapX, Globals.Config.ForceFarMapY);
-        byte unk = RenderTargetManagerUpdated.InitializeDistanceShadowmap(thisx, Globals.Config.ForceUnkMapX, Globals.Config.ForceUnkMapY);
-
-        if (near != 0 && far != 0 && unk != 0)
+        if (set)
         {
+            sizeXY.Width = size;
+            sizeXY.Height = size;
+        }
+
+        return sizeXY;
+    }
+
+    private static unsafe byte InitializeShadowmap(RenderTargetManagerUpdated* thisx, SizeParam* _size) {
+        var option = ShadowManager->ShadowmapOption;
+        var setting = Globals.Config.ShadowMapGlobalSettings[option];
+        SizeParam sizeXY = GetShadowmapSettingSize(setting, _size);
+        int width = sizeXY.Width;
+        int height = sizeXY.Height;
+
+        if (Globals.Config.MaintainGameAspect)
+        {
+            height = Math.Min(16384, width * 5);
+        }
+
+        // if debug and axis != 0
+        if (Globals.Config.Debug)
+        {
+            if (Globals.Config.ForceMapX != 0)
+            {
+                width = Globals.Config.ForceMapX;
+            }
+
+            if (Globals.Config.ForceMapY != 0)
+            {
+                height = Globals.Config.ForceMapY;
+            }
+        }
+
+        if (RenderTargetManagerUpdated.InitializeShadowmap(thisx, width, height) != 0)
+        {
+            thisx->ShadowMap_Width = width;
+            thisx->ShadowMap_Height = height;
             return 1;
         }
 
         return 0;
     }
 
-    public static unsafe void EnableShadowCascadeOverride() {
-        // if regalloc ever changes, these will fail; may be better to hijack the whole function
-        /*
-        Text_ShadowCascade0 = Service.SigScanner.ScanText("F3 0F 11 ?? ?? F3 44 0F 5C EC");
-        Text_ShadowCascade1 = Service.SigScanner.ScanText("F3 0F 11 ?? ?? F3 41 0F 58 D8 F3 0F 11 57 ??");
-        Text_ShadowCascade2 = Service.SigScanner.ScanText("F3 0F 11 ?? ?? 48 8D 9F ?? ?? ?? ?? ?? ?? 00 00 00");
-        Text_ShadowCascade3 = Service.SigScanner.ScanText("F3 44 0F 11 6F ?? 48 8B 05");
+    private static unsafe byte InitializeShadowmapNearFar(RenderTargetManagerUpdated* thisx, SizeParam* _size) {
+        var option = ShadowManager->ShadowmapOption;
+        SizeParam size_near = GetShadowmapSettingSize(Globals.Config.ShadowMapNearSettings[option], _size);
+        SizeParam size_far = GetShadowmapSettingSize(Globals.Config.ShadowMapFarSettings[option], _size);
+        SizeParam size_dist = GetShadowmapSettingSize(Globals.Config.ShadowMapDistanceSettings[option], _size);
 
-        BytecodeHelper.ReadWriteNops(Text_ShadowCascade0, ref OriginalBytes_ShadowCascade0, 5);
-        BytecodeHelper.ReadWriteNops(Text_ShadowCascade1, ref OriginalBytes_ShadowCascade1, 5);
-        BytecodeHelper.ReadWriteNops(Text_ShadowCascade2, ref OriginalBytes_ShadowCascade2, 5);
-        BytecodeHelper.ReadWriteNops(Text_ShadowCascade3, ref OriginalBytes_ShadowCascade3, 6);*/
+        int width_near = size_near.Width;
+        int height_near = size_near.Height;
+
+        int width_far = size_far.Width;
+        int height_far = size_far.Height;
+
+        int width_dist = size_dist.Width;
+        int height_dist = size_dist.Height;
+
+        if (Globals.Config.MaintainGameAspect)
+        {
+            width_near = Math.Min(16384, width_near * 2);
+            height_near = Math.Min(16384, height_near * 2);
+
+            width_dist = Math.Min(16384, width_dist * 4);
+        }
+
+        if (Globals.Config.Debug)
+        {
+            if (Globals.Config.ForceNearMapX != 0)
+            {
+                width_near = Globals.Config.ForceNearMapX;
+            }
+
+            if (Globals.Config.ForceNearMapY != 0)
+            {
+                height_near = Globals.Config.ForceNearMapY;
+            }
+
+            if (Globals.Config.ForceFarMapX != 0)
+            {
+                width_far = Globals.Config.ForceFarMapX;
+            }
+
+            if (Globals.Config.ForceFarMapY != 0)
+            {
+                height_far = Globals.Config.ForceFarMapY;
+            }
+
+            if (Globals.Config.ForceDistanceMapX != 0)
+            {
+                width_dist = Globals.Config.ForceDistanceMapX;
+            }
+
+            if (Globals.Config.ForceDistanceMapY != 0)
+            {
+                height_dist = Globals.Config.ForceDistanceMapY;
+            }
+        }
+
+        byte near = RenderTargetManagerUpdated.InitializeNearShadowmap(thisx, width_near, height_near);
+        byte far = RenderTargetManagerUpdated.InitializeFarShadowmap(thisx, width_far, height_far);
+        byte unk = RenderTargetManagerUpdated.InitializeDistanceShadowmap(thisx, width_dist, height_dist);
+
+        if (near != 0 && far != 0 && unk != 0)
+        {
+            thisx->NearShadowMap_Width = width_near;
+            thisx->NearShadowMap_Height = height_near;
+
+            thisx->FarShadowMap_Width = width_far;
+            thisx->FarShadowMap_Height = height_far;
+
+            thisx->DistanceShadowMap_Width = width_dist;
+            thisx->DistanceShadowMap_Height = height_dist;
+
+            return 1;
+        }
+
+        return 0;
+    }
+
+    private static unsafe void UpdateCascadeValues(ShadowManager* thisx, float unk1)
+    {
+        UpdateCascadeValuesHook?.Original(thisx, unk1);
+
+        if ((Globals.DtrDisplay.locationChanged || Globals.ReapplyPreset) && !Globals.Config.EditOverride)
+        {
+            string continent = "";
+            string territory = "";
+            string region = "";
+            string subArea = "";
+
+            Globals.DtrDisplay.locationChanged = false;
+
+            if (Globals.DtrDisplay.currentContinent != null)
+            {
+                continent = Globals.DtrDisplay.currentContinent.Name.RawString;
+            }
+
+            if (Globals.DtrDisplay.currentTerritory != null)
+            {
+                territory = Globals.DtrDisplay.currentTerritory.Name.RawString;
+            }
+
+            if (Globals.DtrDisplay.currentRegion != null)
+            {
+                region = Globals.DtrDisplay.currentRegion.Name.RawString;
+            }
+
+            if (Globals.DtrDisplay.currentSubArea != null)
+            {
+                subArea = Globals.DtrDisplay.currentSubArea.Name.RawString;
+            }
+
+            Globals.Config.ApplyPresetByGuid(Globals.Config.GetZonePresetGUID(new string[] { continent, territory, region, subArea }));
+
+            if (ShadowManager != null && Globals.Config.Enabled)
+            {
+                ShadowManager->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
+                ShadowManager->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
+                ShadowManager->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
+                ShadowManager->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+                ShadowManager->CascadeDistance4 = Globals.Config.cascades.CascadeDistance4;
+            }
+
+            Globals.Config.FixupZoneDefaultPresets();
+            Globals.Config.shared.mapPresets = Globals.SortConfigDictionaryAndChildren(Globals.Config.shared.mapPresets);
+        }
+
+        if (Globals.Config.EditOverride)
+        {
+            if (ShadowManager != null && Globals.Config.Enabled)
+            {
+                ShadowManager->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
+                ShadowManager->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
+                ShadowManager->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
+                ShadowManager->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+                ShadowManager->CascadeDistance4 = Globals.Config.cascades.CascadeDistance4;
+            }
+        }
+    }
+
+    public static unsafe void EnableShadowCascadeOverride() {
+        if (CascadeOverrideEnabled) {
+            return;
+        }
+
+        var ShadowCascadePtr = Service.SigScanner.ScanText("e8 ?? ?? ?? ?? 48 8b ?? ?? ?? ?? ?? 0f 28 d6 48 8b d3 e8 ?? ?? ?? ?? 0f");
+        if (ShadowCascadePtr != IntPtr.Zero)
+        {
+            UpdateCascadeValuesHook = Service.GameInteropProvider.HookFromAddress<ShadowManager_UpdateCascadeValuesDelegate>(ShadowCascadePtr, UpdateCascadeValues);
+            UpdateCascadeValuesHook.Enable();
+        }
 
         CascadeOverrideEnabled = true;
         Service.Logger.Verbose($"CascadeOverrideEnabled: {CascadeOverrideEnabled}");
     }
 
-    public static unsafe void EnableShadowmapOverride() {
-        if (ShadowmapOverrideEnabled) {
+    public static unsafe void EnableShadowMapOverride() {
+        if (ShadowMapOverrideEnabled) {
             return;
         }
 
-        /*Text_NearFarShadowmap0 = Service.SigScanner.ScanText("c1 e0 02 89 81 84 02 00 00 48 8b 89 20 01 00 00");
-        BytecodeHelper.ReadWriteCode(Text_NearFarShadowmap0 - 15, ref OriginalBytes_NearFarShadowmap0, // do not << 2 NearShadowMap Height
-            "90 90 90 90 90 90 90 90 90 8b 82 04 00 00 00 90 90 90 89 81 84 02 00 00"
-        );
-
-        Text_NearFarShadowmap1 = Service.SigScanner.ScanText("48 8b 4c 24 68 8b 01");
-        BytecodeHelper.ReadWriteCode(Text_NearFarShadowmap1 + 7, ref OriginalBytes_NearFarShadowmap1, // Don't do a bunch of funky operations on FarShadowMap
-            "90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 41 8b 86 8c 02 00 00 c1 e8 02 41 89 86 8c 02 00 00 90 90 90 90 90 90 90 90 90 90" // something about the ratio fixes weird issues in PoTD, but idc, Square should just make it not one massive map
-            //"90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 90 90 ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? ?? 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90"
-        );*/
-
         // 48 89 5c 24 10 48 89 74 24 18 57 41 56 41 57 48 83 ec 30 48 8b 02 48 8b fa 48 89 81 ?? ?? 00 00
-        var InitializeShadowmapHookPtr0 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 0f 84 ?? 00 00 00 8b 4f");
-        var InitializeShadowmapHookPtr1 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 74 53 33 d2 48 8d 8f");
+        var InitializeShadowMapHookPtr0 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 0f 84 ?? 00 00 00 8b 4f");
+        var InitializeShadowMapHookPtr1 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 74 53 33 d2 48 8d 8f");
 
-        if (InitializeShadowmapHookPtr0 != IntPtr.Zero) {
-            InitializeShadowmapHook = Service.GameInteropProvider.HookFromAddress<RenderTargetManager_InitializeShadowmapDelegate>(InitializeShadowmapHookPtr0, InitializeShadowmap);
-            InitializeShadowmapHook.Enable();
-        }
-        else
-        {
-            Service.Logger.Warning("InitializeShadowmapHookPtr0 null");
+        if (InitializeShadowMapHookPtr0 != IntPtr.Zero) {
+            InitializeShadowMapHook = Service.GameInteropProvider.HookFromAddress<RenderTargetManager_InitializeShadowmapDelegate>(InitializeShadowMapHookPtr0, InitializeShadowmap);
+            InitializeShadowMapHook.Enable();
         }
 
-        if (InitializeShadowmapHookPtr1 != IntPtr.Zero) {
-            InitializeShadowmapNearFarHook = Service.GameInteropProvider.HookFromAddress<RenderTargetManager_InitializeShadowmapDelegate>(InitializeShadowmapHookPtr1, InitializeShadowmapNearFar);
-            InitializeShadowmapNearFarHook.Enable();
-        }
-        else
-        {
-            Service.Logger.Warning("InitializeShadowmapHookPtr1 null");
+        if (InitializeShadowMapHookPtr1 != IntPtr.Zero) {
+            InitializeShadowMapNearFarHook = Service.GameInteropProvider.HookFromAddress<RenderTargetManager_InitializeShadowmapDelegate>(InitializeShadowMapHookPtr1, InitializeShadowmapNearFar);
+            InitializeShadowMapNearFarHook.Enable();
         }
 
-        ReinitializeShadowmap();
+        ReinitializeShadowMap();
 
-        ShadowmapOverrideEnabled = true;
-        Service.Logger.Verbose($"ShadowmapOverrideEnabled: {ShadowmapOverrideEnabled}");
+        ShadowMapOverrideEnabled = true;
+        Service.Logger.Verbose($"ShadowMapOverrideEnabled: {ShadowMapOverrideEnabled}");
     }
 
     public static void DisableShadowCascadeOverride() {
-        if (CascadeOverrideEnabled) {
-            /*BytecodeHelper.RestoreNops(Text_ShadowCascade0, OriginalBytes_ShadowCascade0, 5);
-            BytecodeHelper.RestoreNops(Text_ShadowCascade1, OriginalBytes_ShadowCascade1, 5);
-            BytecodeHelper.RestoreNops(Text_ShadowCascade2, OriginalBytes_ShadowCascade2, 5);
-            BytecodeHelper.RestoreNops(Text_ShadowCascade3, OriginalBytes_ShadowCascade3, 6);*/
-
-            Text_ShadowCascade0 = IntPtr.Zero;
-            Text_ShadowCascade1 = IntPtr.Zero;
-            Text_ShadowCascade2 = IntPtr.Zero;
-            Text_ShadowCascade3 = IntPtr.Zero;
+        if (CascadeOverrideEnabled)
+        {
+            UpdateCascadeValuesHook?.Disable();
+            InitializeShadowMapHook?.Dispose();
         }
 
         CascadeOverrideEnabled = false;
         Service.Logger.Verbose($"CascadeOverrideEnabled: {CascadeOverrideEnabled}");
     }
 
-    public static void DisableShadowmapOverride() {
-        if (ShadowmapOverrideEnabled) {
-            //BytecodeHelper.RestoreCode(Text_NearFarShadowmap0 - 15, OriginalBytes_NearFarShadowmap0);
-            //BytecodeHelper.RestoreCode(Text_NearFarShadowmap1 + 7, OriginalBytes_NearFarShadowmap1);
+    public static void DisableShadowMapOverride() {
+        if (ShadowMapOverrideEnabled) {
+            InitializeShadowMapHook?.Disable();
+            InitializeShadowMapNearFarHook?.Disable();
+            InitializeShadowMapHook?.Dispose();
+            InitializeShadowMapNearFarHook?.Dispose();
 
-            if (InitializeShadowmapHook != null) {
-                if (!InitializeShadowmapHook.IsDisposed) {
-                    if (InitializeShadowmapHook.IsEnabled) {
-                    InitializeShadowmapHook.Disable();
-                }
-                    InitializeShadowmapHook.Dispose();
-                }
-            }
-
-            if (InitializeShadowmapNearFarHook != null) {
-                if (!InitializeShadowmapNearFarHook.IsDisposed) {
-                    if (InitializeShadowmapNearFarHook.IsEnabled) {
-                        InitializeShadowmapNearFarHook.Disable();
-                        // revert to default
-                    }
-                    InitializeShadowmapNearFarHook.Dispose();
-                }
-            }
-
-            ReinitializeShadowmap();
+            ReinitializeShadowMap();
         }
-        ShadowmapOverrideEnabled = false;
-        Service.Logger.Verbose($"ShadowmapOverrideEnabled: {ShadowmapOverrideEnabled}");
+
+        ShadowMapOverrideEnabled = false;
+        Service.Logger.Verbose($"ShadowMapOverrideEnabled: {ShadowMapOverrideEnabled}");
     }
 
-    public static unsafe void ReinitializeShadowmap() {
+    public static unsafe void ReinitializeShadowMap() {
         ShadowManager->Unk_Bitfield |= 1; // reinitializes shadowmap next frame
-
-        var option = ShadowManager->ShadowmapOption;
-        if (Globals.Config.ShadowmapSettings[option] == ShadowmapResolution.RES_NONE) {
-            // revert to default
-        }
     }
 }

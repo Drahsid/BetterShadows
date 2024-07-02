@@ -25,10 +25,11 @@ public enum ShadowmapResolution {
 public class CascadeConfig {
     public string Name = "";
     public Guid? GUID = Guid.Empty;
-    public float CascadeDistance0 = 72.0f;
-    public float CascadeDistance1 = 144.0f;
-    public float CascadeDistance2 = 432.0f;
-    public float CascadeDistance3 = 3072.0f;
+    public float CascadeDistance0 = 50.0f;
+    public float CascadeDistance1 = 120.0f;
+    public float CascadeDistance2 = 300.0f;
+    public float CascadeDistance3 = 652.0f;
+    public float CascadeDistance4 = 1300.0f;
 
     public CascadeConfig() { }
     public CascadeConfig(CascadeConfig copy) {
@@ -37,13 +38,15 @@ public class CascadeConfig {
         CascadeDistance1 = copy.CascadeDistance1;
         CascadeDistance2 = copy.CascadeDistance2;
         CascadeDistance3 = copy.CascadeDistance3;
+        CascadeDistance4 = copy.CascadeDistance4;
     }
-    public CascadeConfig(string name, float cascadeDistance0, float cascadeDistance1, float cascadeDistance2, float cascadeDistance3) {
+    public CascadeConfig(string name, float cascadeDistance0, float cascadeDistance1, float cascadeDistance2, float cascadeDistance3, float cascadeDistance4) {
         Name = name;
         CascadeDistance0 = cascadeDistance0;
         CascadeDistance1 = cascadeDistance1;
         CascadeDistance2 = cascadeDistance2;
         CascadeDistance3 = cascadeDistance3;
+        CascadeDistance4 = cascadeDistance4;
     }
 }
 
@@ -115,20 +118,24 @@ public class Configuration : IPluginConfiguration {
     [Obsolete] public List<CascadeConfig>? cascadePresets = null;
     [Obsolete] public bool HigherResShadowmap = true;
 
-    public int ForceMapX = 512;
-    public int ForceMapY = 2560;
+    #region Debug
+    public bool Debug = false;
 
-    public int ForceNearMapX = 2048;
-    public int ForceNearMapY = 2048;
+    public int ForceMapX = 0;
+    public int ForceMapY = 0;
+    public int ForceNearMapX = 0;
+    public int ForceNearMapY = 0;
+    public int ForceFarMapX = 0;
+    public int ForceFarMapY = 0;
+    public int ForceDistanceMapX = 0;
+    public int ForceDistanceMapY = 0;
+    #endregion
 
-    public int ForceFarMapX = 1024;
-    public int ForceFarMapY = 1024;
-
-    public int ForceUnkMapX = 4096;
-    public int ForceUnkMapY = 1024;
-
-    public ShadowmapResolution[] ShadowmapSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
-    public float SliderMax = 4096.0f;
+    public ShadowmapResolution[] ShadowMapGlobalSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
+    public ShadowmapResolution[] ShadowMapNearSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
+    public ShadowmapResolution[] ShadowMapFarSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
+    public ShadowmapResolution[] ShadowMapDistanceSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
+    public float SliderMax = 9000.0f;
     public bool Enabled = true;
     public bool EnabledOverall = true;
     public bool EditOverride = false;
@@ -136,18 +143,20 @@ public class Configuration : IPluginConfiguration {
     public bool HideTooltips = false;
     public bool ShowContinent = true;
     public bool OpenInGPose = true;
+    public bool MaintainGameAspect = true;
     #endregion
 
     public string lastSelectedPreset = "";
 
     private readonly List<CascadeConfig> defaultCascadePresets = new List<CascadeConfig> {
-        new CascadeConfig("Seamless (4k)", 28, 56, 112, 196),
-        new CascadeConfig("Long Distance (4k)", 256, 768, 1536, 3072),
-        new CascadeConfig("Balanced (4k)", 40, 116, 265, 2154),
-        new CascadeConfig("Detailed (4k)", 13, 34, 64, 138),
-        new CascadeConfig("Compromise (4k)", 72, 144, 432, 3072),
-        new CascadeConfig("Long Distance (16k)", 96, 288, 864, 2592),
-        new CascadeConfig("Detailed (16k)", 52, 136, 256, 552),
+        new CascadeConfig("Seamless (4k)", 28, 56, 112, 196, 250),
+        new CascadeConfig("Long Distance (4k)", 256, 768, 1536, 2500, 3072),
+        new CascadeConfig("Balanced (4k)", 40, 116, 265, 500, 2154),
+        new CascadeConfig("Detailed (4k)", 13, 34, 64, 138, 210),
+        new CascadeConfig("Compromise (4k)", 72, 144, 432, 1000, 3072),
+        new CascadeConfig("Long Distance (16k)", 320, 853, 1920, 4053, 8320),
+        new CascadeConfig("Detailed (16k)", 52, 136, 256, 552, 1920),
+        new CascadeConfig("Compromise (16k)", 160, 426, 960, 1920, 2154),
     };
 
     public Guid GetZonePresetGUID(string[] keys) {
@@ -254,6 +263,12 @@ public class Configuration : IPluginConfiguration {
         foreach (CascadeConfig c in shared.cascadePresets) {
             if (c.GUID is null || c.GUID == Guid.Empty) {
                 c.GUID = Guid.NewGuid();
+            }
+
+            // deal with 7.0 upgrade
+            if ((float?)c.CascadeDistance4 is null)
+            {
+                c.CascadeDistance4 = c.CascadeDistance3 + 10;
             }
         }
 

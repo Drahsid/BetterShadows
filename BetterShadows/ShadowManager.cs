@@ -1,6 +1,4 @@
 ﻿using DrahsidLib;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using System;
 using System.Runtime.InteropServices;
 
@@ -20,7 +18,8 @@ public unsafe partial struct ShadowManager {
     [FieldOffset(0x4C)] public float CascadeDistance1;
     [FieldOffset(0x50)] public float CascadeDistance2;
     [FieldOffset(0x54)] public float CascadeDistance3;
-    [FieldOffset(0x5C)] public uint Unk_Bitfield; // this may still begin at 0x58, and just be 8 bytes now
+    [FieldOffset(0x58)] public float CascadeDistance4;
+    [FieldOffset(0x5C)] public uint Unk_Bitfield;
 
     public static ShadowManager* Instance() {
         IntPtr addr = Service.SigScanner.GetStaticAddressFromSig("48 8B 05 ?? ?? ?? ?? 49 8B 0C 00");

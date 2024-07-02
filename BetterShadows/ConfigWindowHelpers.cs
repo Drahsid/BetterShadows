@@ -131,6 +131,7 @@ internal static class ConfigWindowHelpers {
                 Globals.Config.shared.cascadePresets[index].CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
                 Globals.Config.shared.cascadePresets[index].CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
                 Globals.Config.shared.cascadePresets[index].CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+                Globals.Config.shared.cascadePresets[index].CascadeDistance4 = Globals.Config.cascades.CascadeDistance4;
             }
 
             ImGui.SameLine();
@@ -151,6 +152,7 @@ internal static class ConfigWindowHelpers {
                 Globals.Config.cascades.CascadeDistance1 = Globals.Config.shared.cascadePresets[index].CascadeDistance1;
                 Globals.Config.cascades.CascadeDistance2 = Globals.Config.shared.cascadePresets[index].CascadeDistance2;
                 Globals.Config.cascades.CascadeDistance3 = Globals.Config.shared.cascadePresets[index].CascadeDistance3;
+                Globals.Config.cascades.CascadeDistance4 = Globals.Config.shared.cascadePresets[index].CascadeDistance4;
                 Globals.Config.cascades.GUID = Globals.Config.shared.cascadePresets[index].GUID;
             }
 
@@ -206,7 +208,7 @@ internal static class ConfigWindowHelpers {
         set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
             "Cascade Distance 2",
             ref Globals.Config.cascades.CascadeDistance2,
-            "The distance of the second farthest cascade. The value of this should be between Cascade Distance 1, and Cascade Distance 3.",
+            "The distance of the third farthest cascade. The value of this should be between Cascade Distance 1, and Cascade Distance 3.",
             Globals.Config.cascades.CascadeDistance1,
             Globals.Config.cascades.CascadeDistance3);
 
@@ -214,8 +216,16 @@ internal static class ConfigWindowHelpers {
         set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
             "Cascade Distance 3",
             ref Globals.Config.cascades.CascadeDistance3,
-            "The distance of the farthest cascade. The value of this should be the largest.",
+            "The distance of the second farthest cascade. The value of this should be between Cascade Distance 2, and Cascade Distance 4.",
             Globals.Config.cascades.CascadeDistance2,
+            Globals.Config.cascades.CascadeDistance4);
+
+        ImGui.SetNextItemWidth(charX * 10);
+        set_override |= WindowDrawHelpers.DrawFloatInputTooltip(
+            "Cascade Distance 4",
+            ref Globals.Config.cascades.CascadeDistance4,
+            "The distance of the farthest cascade. The value of this should be the largest.",
+            Globals.Config.cascades.CascadeDistance3,
             Globals.Config.SliderMax);
 
         ImGui.SetNextItemWidth(charX * 34);

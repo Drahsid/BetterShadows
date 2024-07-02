@@ -1,4 +1,6 @@
-﻿using Dalamud.Interface.Windowing;
+﻿using System.Collections.Generic;
+using System;
+using System.Linq;
 
 namespace BetterShadows;
 
@@ -21,13 +23,27 @@ internal static class Globals {
     public static unsafe void ToggleShadowmap() {
         if (Config.EnabledOverall) {
             var option = CodeManager.ShadowManager->ShadowmapOption;
-            var setting = Config.ShadowmapSettings[option];
+            var setting = Config.ShadowMapGlobalSettings[option];
             if (setting != ShadowmapResolution.RES_NONE) {
-                CodeManager.EnableShadowmapOverride();
+                CodeManager.EnableShadowMapOverride();
             }
         }
         else {
-            CodeManager.DisableShadowmapOverride();
+            CodeManager.DisableShadowMapOverride();
         }
+    }
+
+    internal static Dictionary<string, ConfigTreeNode> SortConfigDictionaryAndChildren(Dictionary<string, ConfigTreeNode> dictionary)
+    {
+        Dictionary<string, ConfigTreeNode> result = dictionary.OrderBy(entry => entry.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(entry => entry.Key, entry => entry.Value);
+        foreach (var entry in result.Values)
+        {
+            if (entry.Children != null)
+            {
+                entry.Children = SortConfigDictionaryAndChildren(entry.Children);
+            }
+        }
+
+        return result;
     }
 }
