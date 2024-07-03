@@ -135,8 +135,11 @@ internal static class CodeManager {
             thisx->ShadowMap_Height = height;
             return 1;
         }
-
-        return 0;
+        else
+        {
+            Service.Logger.Error("InitializeShadowmap failed?");
+            return InitializeShadowMapHook.Original(thisx, _size);
+        }
     }
 
     private static unsafe byte InitializeShadowmapNearFar(RenderTargetManagerUpdated* thisx, SizeParam* _size) {
@@ -158,7 +161,6 @@ internal static class CodeManager {
         {
             width_near = Math.Min(16384, width_near * 2);
             height_near = Math.Min(16384, height_near * 2);
-
             width_dist = Math.Min(16384, width_dist * 4);
         }
 
@@ -197,9 +199,9 @@ internal static class CodeManager {
 
         byte near = RenderTargetManagerUpdated.InitializeNearShadowmap(thisx, width_near, height_near);
         byte far = RenderTargetManagerUpdated.InitializeFarShadowmap(thisx, width_far, height_far);
-        byte unk = RenderTargetManagerUpdated.InitializeDistanceShadowmap(thisx, width_dist, height_dist);
+        byte dist = RenderTargetManagerUpdated.InitializeDistanceShadowmap(thisx, width_dist, height_dist);
 
-        if (near != 0 && far != 0 && unk != 0)
+        if (near != 0 && far != 0 && dist != 0)
         {
             thisx->NearShadowMap_Width = width_near;
             thisx->NearShadowMap_Height = height_near;
@@ -212,14 +214,23 @@ internal static class CodeManager {
 
             return 1;
         }
-
-        return 0;
+        else
+        {
+            Service.Logger.Error($"InitializeShadowmapNearFar failed? {near}, {far}, {dist}");
+            return InitializeShadowMapNearFarHook.Original(thisx, _size);
+        }
     }
 
     private static unsafe void UpdateCascadeValues(ShadowManager* thisx, float unk1)
     {
-        UpdateCascadeValuesHook?.Original(thisx, unk1);
+        if (UpdateCascadeValuesHook == null || UpdateCascadeValuesHook.IsDisposed)
+        {
+            return;
+        }
 
+        UpdateCascadeValuesHook.Original(thisx, unk1);
+
+        // a change in location or preset occured
         if ((Globals.DtrDisplay.locationChanged || Globals.ReapplyPreset) && !Globals.Config.EditOverride)
         {
             string continent = "";
@@ -251,28 +262,29 @@ internal static class CodeManager {
 
             Globals.Config.ApplyPresetByGuid(Globals.Config.GetZonePresetGUID(new string[] { continent, territory, region, subArea }));
 
-            if (ShadowManager != null && Globals.Config.Enabled)
+            if (Globals.Config.Enabled)
             {
-                ShadowManager->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
-                ShadowManager->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
-                ShadowManager->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
-                ShadowManager->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
-                ShadowManager->CascadeDistance4 = Globals.Config.cascades.CascadeDistance4;
+                thisx->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
+                thisx->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
+                thisx->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
+                thisx->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+                thisx->CascadeDistance4 = Globals.Config.cascades.CascadeDistance4;
             }
 
             Globals.Config.FixupZoneDefaultPresets();
             Globals.Config.shared.mapPresets = Globals.SortConfigDictionaryAndChildren(Globals.Config.shared.mapPresets);
         }
 
+        // use edit override if it is toggled
         if (Globals.Config.EditOverride)
         {
-            if (ShadowManager != null && Globals.Config.Enabled)
+            if (Globals.Config.Enabled)
             {
-                ShadowManager->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
-                ShadowManager->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
-                ShadowManager->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
-                ShadowManager->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
-                ShadowManager->CascadeDistance4 = Globals.Config.cascades.CascadeDistance4;
+                thisx->CascadeDistance0 = Globals.Config.cascades.CascadeDistance0;
+                thisx->CascadeDistance1 = Globals.Config.cascades.CascadeDistance1;
+                thisx->CascadeDistance2 = Globals.Config.cascades.CascadeDistance2;
+                thisx->CascadeDistance3 = Globals.Config.cascades.CascadeDistance3;
+                thisx->CascadeDistance4 = Globals.Config.cascades.CascadeDistance4;
             }
         }
     }
@@ -301,6 +313,7 @@ internal static class CodeManager {
         // 48 89 5c 24 10 48 89 74 24 18 57 41 56 41 57 48 83 ec 30 48 8b 02 48 8b fa 48 89 81 ?? ?? 00 00
         var InitializeShadowMapHookPtr0 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 0f 84 ?? 00 00 00 8b 4f");
         var InitializeShadowMapHookPtr1 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 74 53 33 d2 48 8d 8f");
+        var aaa = Service.SigScanner.ScanText("4c 8b d9 0f b6 d2 49 b9 01 01 01 01 01 01 01 01");
 
         if (InitializeShadowMapHookPtr0 != IntPtr.Zero) {
             InitializeShadowMapHook = Service.GameInteropProvider.HookFromAddress<RenderTargetManager_InitializeShadowmapDelegate>(InitializeShadowMapHookPtr0, InitializeShadowmap);
@@ -321,8 +334,18 @@ internal static class CodeManager {
     public static void DisableShadowCascadeOverride() {
         if (CascadeOverrideEnabled)
         {
-            UpdateCascadeValuesHook?.Disable();
-            InitializeShadowMapHook?.Dispose();
+            if (UpdateCascadeValuesHook != null)
+            {
+                if (UpdateCascadeValuesHook.IsEnabled)
+                {
+                    UpdateCascadeValuesHook.Disable();
+                }
+
+                if (!UpdateCascadeValuesHook.IsDisposed)
+                {
+                    UpdateCascadeValuesHook.Dispose();
+                }
+            }
         }
 
         CascadeOverrideEnabled = false;
@@ -330,11 +353,32 @@ internal static class CodeManager {
     }
 
     public static void DisableShadowMapOverride() {
-        if (ShadowMapOverrideEnabled) {
-            InitializeShadowMapHook?.Disable();
-            InitializeShadowMapNearFarHook?.Disable();
-            InitializeShadowMapHook?.Dispose();
-            InitializeShadowMapNearFarHook?.Dispose();
+        if (ShadowMapOverrideEnabled)
+        {
+            if (InitializeShadowMapHook != null) {
+                if (InitializeShadowMapHook.IsEnabled)
+                {
+                    InitializeShadowMapHook.Disable();
+                }
+
+                if (!InitializeShadowMapHook.IsDisposed)
+                {
+                    InitializeShadowMapHook.Dispose();
+                }
+            }
+
+            if (InitializeShadowMapNearFarHook != null)
+            {
+                if (InitializeShadowMapNearFarHook.IsEnabled)
+                {
+                    InitializeShadowMapNearFarHook.Disable();
+                }
+
+                if (!InitializeShadowMapNearFarHook.IsDisposed)
+                {
+                    InitializeShadowMapNearFarHook.Dispose();
+                }
+            }
 
             ReinitializeShadowMap();
         }
@@ -344,6 +388,9 @@ internal static class CodeManager {
     }
 
     public static unsafe void ReinitializeShadowMap() {
-        ShadowManager->Unk_Bitfield |= 1; // reinitializes shadowmap next frame
+        if (ShadowManager != null)
+        {
+            ShadowManager->Unk_Bitfield |= 1; // reinitializes shadowmap next frame
+        }
     }
 }

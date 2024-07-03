@@ -307,7 +307,7 @@ public class ConfigWindow : WindowWrapper {
                 CodeManager.ReinitializeShadowMap();
             }
 
-            if (ImGui.TreeNode("Global ShadowMap Settings"))
+            if (ImGui.TreeNode("Global Sun Shadow Map Settings"))
             {
                 DrawGlobalShadowmapSetting();
                 ImGui.TreePop();
