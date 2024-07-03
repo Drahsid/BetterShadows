@@ -4,7 +4,7 @@
 [assembly: System.Reflection.AssemblyProduct("BetterShadows")]
 [assembly: System.Reflection.AssemblyTitle("BetterShadows")]
 
-[assembly: System.Reflection.AssemblyVersion("1.4.0")]
+[assembly: System.Reflection.AssemblyVersion("1.4.1")]
 
 #if DEBUG
 [assembly: System.Reflection.AssemblyConfiguration("Debug")]
