@@ -42,9 +42,9 @@ public unsafe partial struct RenderTargetManagerUpdated {
 
     [FieldOffset(0x228)] public Texture* ShadowMapTextureDistance;
     [FieldOffset(0x230)] public Texture* ShadowMapTexture_Distance0;
-    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Distance1;
-    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Distance2;
-    [FieldOffset(0x230)] public Texture* ShadowMapTexture_Distance3;
+    [FieldOffset(0x238)] public Texture* ShadowMapTexture_Distance1;
+    [FieldOffset(0x240)] public Texture* ShadowMapTexture_Distance2;
+    [FieldOffset(0x248)] public Texture* ShadowMapTexture_Distance3;
 
     [FieldOffset(0x430)] public int Resolution_Width;
     [FieldOffset(0x434)] public int Resolution_Height;

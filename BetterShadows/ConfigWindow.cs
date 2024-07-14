@@ -3,7 +3,6 @@ using System.Numerics;
 using DrahsidLib;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using System;
-using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 
 namespace BetterShadows;
 
@@ -51,6 +50,12 @@ public class ConfigWindow : WindowWrapper {
                 "Enable or disable the usage of custom shadow cascade values. When this is disabled, the Zone Preset Config section is hidden, since it would be unused."))
         {
             Globals.ToggleHacks();
+        }
+
+        if (WindowDrawHelpers.DrawCheckboxTooltip("Use Dynamic Cascade Values",
+            ref Globals.Config.DynamicCascadeMode,
+            "Dynamically adjust the cascade values based on your shadowmap settings. If this is off, the plugin will use the per-territory settings")) {
+            //
         }
     }
 
@@ -285,6 +290,68 @@ public class ConfigWindow : WindowWrapper {
     public override unsafe void Draw() {
         bool set_override = false;
 
+        WindowDrawHelpers.DrawCheckboxTooltip("Show Debug", ref Globals.Config.Debug, "Show advanced debug options and info.");
+        if (Globals.Config.Debug)
+        {
+            if (ImGui.TreeNode("Debug")) {
+                var _rtm = RenderTargetManager.Instance();
+                RenderTargetManagerUpdated* rtm = (RenderTargetManagerUpdated*)_rtm;
+
+                ImGui.TextDisabled("Setting these options to non-zero values will force that value for the related shadowmap resolution");
+
+                ImGui.InputInt("Global Map Width", ref Globals.Config.ForceMapX);
+                ImGui.InputInt("Global Map Height", ref Globals.Config.ForceMapY);
+
+                ImGui.InputInt("Dynamic Near Map Width", ref Globals.Config.ForceNearMapX);
+                ImGui.InputInt("Dynamic Near Map Height", ref Globals.Config.ForceNearMapY);
+
+                ImGui.InputInt("Dynamic Far Map Width", ref Globals.Config.ForceFarMapX);
+                ImGui.InputInt("Dynamic Far Map Height", ref Globals.Config.ForceFarMapY);
+
+                ImGui.InputInt("Distance Map Width", ref Globals.Config.ForceDistanceMapX);
+                ImGui.InputInt("Distance Map Height", ref Globals.Config.ForceDistanceMapY);
+
+                ImGui.Text($"Global ShadowMap Dimensions: {rtm->ShadowMap_Width}, {rtm->ShadowMap_Height}");
+                ImGui.Text($"Near Dynamic Light ShadowMap Dimensions: {rtm->NearShadowMap_Width}, {rtm->NearShadowMap_Height}");
+                ImGui.Text($"Far Dynamic Light ShadowMap Dimensions: {rtm->FarShadowMap_Width}, {rtm->FarShadowMap_Height}");
+                ImGui.Text($"Distance ShadowMap Dimensions: {rtm->DistanceShadowMap_Width}, {rtm->DistanceShadowMap_Height}");
+
+                if (ImGui.Button("Reinit"))
+                {
+                    CodeManager.ReinitializeShadowMap();
+                }
+
+                if (Globals.Config.SuperDebug)
+                {
+                    var shadows = ShadowManager.Instance();
+                    ImGui.Separator();
+                    ImGui.Text($"{(IntPtr)(&rtm->Resolution_Width):X}");
+                    ImGui.Text($"{(IntPtr)(shadows):X}");
+                    ImGui.Text($"{(IntPtr)(&shadows->CascadeDistance0):X}");
+
+                    ImGui.Text($"Shadow Cascades: {shadows->CascadeDistance0}, {shadows->CascadeDistance1}, {shadows->CascadeDistance2}, {shadows->CascadeDistance3}, {shadows->CascadeDistance4}");
+                    ImGui.Text($"Shadow Biases: {shadows->Bias0}, {shadows->Bias1}, {shadows->Bias2}, {shadows->Bias3}");
+
+                    ImGui.Text($"Near: {shadows->NearDistance}, Far: {shadows->FarDistance}");
+
+                    ImGui.Text($"ShadowSofteningSetting: {shadows->ShadowSofteningSetting:X} -- {(IntPtr)(&shadows->ShadowSofteningSetting):X}");
+                    ImGui.Text($"Unk_0x10: {shadows->Unk_0x10:X}");
+                    ImGui.Text($"Unk_0x14: {shadows->Unk_0x14:X}");
+                    ImGui.Text($"ShadowmapOption: {shadows->ShadowmapOption} -- {(IntPtr)(&shadows->ShadowmapOption):X}");
+                    ImGui.Text($"ShadowCascadeCount0: {shadows->ShadowCascadeCount0:X}");
+                    ImGui.Text($"ShadowCascadeCount1: {shadows->ShadowCascadeCount1}");
+                    ImGui.Text($"Unk_0x24: {shadows->Unk_0x24:X}");
+                    ImGui.Text($"Unk_0x28: {shadows->Unk_0x28}");
+                    ImGui.Text($"Unk_0x2C: {shadows->Unk_0x2C}");
+                    ImGui.Text($"Unk_0x1E1: {shadows->Unk_0x1E1}");
+                    ImGui.Text($"Unk_0x1E8: {shadows->ShadowapBlending} -- {(IntPtr)(&shadows->ShadowapBlending):X}");
+                }
+
+
+                ImGui.TreePop();
+            }
+        }
+
         if (ImGui.Button("Save"))
         {
             Globals.Config.Save();
@@ -339,7 +406,7 @@ public class ConfigWindow : WindowWrapper {
         {
             ImGui.TextColored(new Vector4(0.75f, 0.75f, 0.1f, 1.0f), "Warning: Using \"Strongest\" Shadow Softening will make seams more visible.");
             DrawCascadeToggleCheckbox();
-            if (Globals.Config.Enabled)
+            if (Globals.Config.Enabled && !Globals.Config.DynamicCascadeMode)
             {
                 ImGui.Separator();
                 WindowDrawHelpers.DrawCheckboxTooltip(
@@ -420,7 +487,8 @@ public class ConfigWindow : WindowWrapper {
 
             ImGui.Separator();
 
-            if (Globals.Config.Enabled)
+            // preset editor stuff
+            if (Globals.Config.Enabled && !Globals.Config.DynamicCascadeMode)
             {
                 const float offset = 32.0f;
                 const float thick = 4.0f;
@@ -466,44 +534,6 @@ public class ConfigWindow : WindowWrapper {
         else
         {
             ImGui.Separator();
-        }
-
-        WindowDrawHelpers.DrawCheckboxTooltip("Show Debug", ref Globals.Config.Debug, "Show advanced debug options and info.");
-        if (Globals.Config.Debug)
-        {
-            if (ImGui.TreeNode("Debug")) {
-                var _rtm = RenderTargetManager.Instance();
-                RenderTargetManagerUpdated* rtm = (RenderTargetManagerUpdated*)_rtm;
-
-                ImGui.TextDisabled("Setting these options to non-zero values will force that value for the related shadowmap resolution");
-
-                ImGui.InputInt("Global Map Width", ref Globals.Config.ForceMapX);
-                ImGui.InputInt("Global Map Height", ref Globals.Config.ForceMapY);
-
-                ImGui.InputInt("Dynamic Near Map Width", ref Globals.Config.ForceNearMapX);
-                ImGui.InputInt("Dynamic Near Map Height", ref Globals.Config.ForceNearMapY);
-
-                ImGui.InputInt("Dynamic Far Map Width", ref Globals.Config.ForceFarMapX);
-                ImGui.InputInt("Dynamic Far Map Height", ref Globals.Config.ForceFarMapY);
-
-                ImGui.InputInt("Distance Map Width", ref Globals.Config.ForceDistanceMapX);
-                ImGui.InputInt("Distance Map Height", ref Globals.Config.ForceDistanceMapY);
-
-                if (ImGui.Button("Reinit"))
-                {
-                    CodeManager.ReinitializeShadowMap();
-                }
-
-                ImGui.Separator();
-                ImGui.Text($"{(IntPtr)(ShadowManager.Instance()):X}");
-                ImGui.Text($"{(IntPtr)(&ShadowManager.Instance()->CascadeDistance0):X}");
-                ImGui.Text($"Global ShadowMap Dimensions: {rtm->ShadowMap_Width}, {rtm->ShadowMap_Height}");
-                ImGui.Text($"Near Dynamic Light ShadowMap Dimensions: {rtm->NearShadowMap_Width}, {rtm->NearShadowMap_Height}");
-                ImGui.Text($"Far Dynamic Light ShadowMap Dimensions: {rtm->FarShadowMap_Width}, {rtm->FarShadowMap_Height}");
-                ImGui.Text($"Distance ShadowMap Dimensions: {rtm->DistanceShadowMap_Width}, {rtm->DistanceShadowMap_Height}");
-
-                ImGui.TreePop();
-            }
         }
     }
 }

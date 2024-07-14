@@ -13,6 +13,7 @@ public class Plugin : IDalamudPlugin {
     private ICommandManager CommandManager { get; init; }
 
     private bool WasGPosing = false;
+    private int LastSoftSetting = 0;
 
     public string Name => "Better Shadows";
 
@@ -56,6 +57,17 @@ public class Plugin : IDalamudPlugin {
         WasGPosing = Service.ClientState.IsGPosing;
 
         Windows.System.Draw();
+
+        unsafe
+        {
+            var shadows = ShadowManager.Instance();
+            if (shadows != null) {
+                if (shadows->ShadowSofteningSetting != LastSoftSetting) {
+                    CodeManager.ReinitializeShadowMap();
+                    LastSoftSetting = shadows->ShadowSofteningSetting;
+                }
+            }
+        }
 
         if (Globals.Config.EnabledOverall) {
             unsafe {

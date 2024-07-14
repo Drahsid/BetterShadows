@@ -46,10 +46,24 @@ internal static class CodeManager {
 
     private unsafe delegate void ShadowManager_UpdateCascadeValuesDelegate(ShadowManager* thisx, float unk1);
 
+    private unsafe delegate void Unk_ShadowSofteningInitDelegate(IntPtr unk1, IntPtr unk2);
+
     private static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowMapHook { get; set; } = null!;
     private static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowMapNearFarHook { get; set; } = null!;
 
     private static Hook<ShadowManager_UpdateCascadeValuesDelegate>? UpdateCascadeValuesHook { get; set; } = null!;
+    private static Hook<Unk_ShadowSofteningInitDelegate>? ShadowSofteningInitHook { get; set; } = null!;
+
+    private static int LastShadowmapWidth = 2048;
+    private static int LastShadowmapHeight = 10240;
+
+    private unsafe static void ShadowSofteningInit(IntPtr unk1, IntPtr unk2) {
+        rtm->ShadowMap_Width = 2048;
+        rtm->ShadowMap_Height = 10240;
+        ShadowSofteningInitHook.Original(unk1, unk2);
+        rtm->ShadowMap_Width = LastShadowmapWidth;
+        rtm->ShadowMap_Height = LastShadowmapHeight;
+    }
 
     private unsafe static SizeParam GetShadowmapSettingSize(ShadowmapResolution setting, SizeParam* _size)
     {
@@ -129,16 +143,28 @@ internal static class CodeManager {
             }
         }
 
+        // Fix strange behavior with strongest shadow softening by forcing the 1:5 shadowmap ratio
+        if (ShadowManager->ShadowSofteningSetting == 3)
+        {
+            width = Math.Min(512 * 6, width);
+            height = Math.Min(512 * 6 * 5, height);
+        }
+
         if (RenderTargetManagerUpdated.InitializeShadowmap(thisx, width, height) != 0)
         {
             thisx->ShadowMap_Width = width;
             thisx->ShadowMap_Height = height;
+            LastShadowmapWidth = width;
+            LastShadowmapHeight = height;
             return 1;
         }
         else
         {
             Service.Logger.Error("InitializeShadowmap failed?");
-            return InitializeShadowMapHook.Original(thisx, _size);
+            var ret = InitializeShadowMapHook.Original(thisx, _size);
+            LastShadowmapWidth = rtm->ShadowMap_Width;
+            LastShadowmapHeight = rtm->ShadowMap_Height;
+            return ret;
         }
     }
 
@@ -221,18 +247,9 @@ internal static class CodeManager {
         }
     }
 
-    private static unsafe void UpdateCascadeValues(ShadowManager* thisx, float unk1)
-    {
-        if (UpdateCascadeValuesHook == null || UpdateCascadeValuesHook.IsDisposed)
-        {
-            return;
-        }
-
-        UpdateCascadeValuesHook.Original(thisx, unk1);
-
+    private static unsafe void UpdateCascadeValues_Manual(ShadowManager* thisx) {
         // a change in location or preset occured
-        if ((Globals.DtrDisplay.locationChanged || Globals.ReapplyPreset) && !Globals.Config.EditOverride)
-        {
+        if ((Globals.DtrDisplay.locationChanged || Globals.ReapplyPreset) && !Globals.Config.EditOverride) {
             string continent = "";
             string territory = "";
             string region = "";
@@ -289,6 +306,56 @@ internal static class CodeManager {
         }
     }
 
+    private static unsafe void UpdateCascadeValues_Dynamic(ShadowManager* thisx) {
+        var _rtm = RenderTargetManager.Instance();
+        RenderTargetManagerUpdated* rtm = (RenderTargetManagerUpdated*)_rtm;
+
+        const UInt64 sizeDefault = 2048 * 10240;
+        UInt64 size = (UInt64)rtm->ShadowMap_Width * (UInt64)rtm->ShadowMap_Height;
+        if (size > sizeDefault)
+        {
+            float _ratio = size / sizeDefault;
+            float ratio = MathF.Max(1.0f, _ratio / 4);
+            thisx->CascadeDistance0 *= ratio;
+            thisx->CascadeDistance1 *= ratio;
+            thisx->CascadeDistance2 *= ratio;
+            thisx->CascadeDistance3 *= ratio;
+            thisx->CascadeDistance4 *= ratio;
+            thisx->ShadowapBlending = 3 * MathF.Max(1.0f, _ratio / 6);
+        }
+    }
+
+    private static unsafe void UpdateCascadeValues(ShadowManager* thisx, float zoom) {
+        if (UpdateCascadeValuesHook == null || UpdateCascadeValuesHook.IsDisposed)
+        {
+            return;
+        }
+
+        if (Globals.Config.DynamicCascadeMode)
+        {
+            var _rtm = RenderTargetManager.Instance();
+            RenderTargetManagerUpdated* rtm = (RenderTargetManagerUpdated*)_rtm;
+
+            const UInt64 sizeDefault = 2048;
+            UInt64 size = (UInt64)rtm->ShadowMap_Width;
+            if (size > sizeDefault)
+            {
+                float ratio = size / sizeDefault;
+                zoom /= ratio;
+            }
+        }
+
+        UpdateCascadeValuesHook.Original(thisx, zoom);
+
+        if (Globals.Config.DynamicCascadeMode)
+        {
+            UpdateCascadeValues_Dynamic(thisx);
+        }
+        else {
+            UpdateCascadeValues_Manual(thisx);
+        }
+    }
+
     public static unsafe void EnableShadowCascadeOverride() {
         if (CascadeOverrideEnabled) {
             return;
@@ -300,6 +367,13 @@ internal static class CodeManager {
             UpdateCascadeValuesHook = Service.GameInteropProvider.HookFromAddress<ShadowManager_UpdateCascadeValuesDelegate>(ShadowCascadePtr, UpdateCascadeValues);
             UpdateCascadeValuesHook.Enable();
         }
+
+        /*var ShadowSoftPtr = Service.SigScanner.ScanText("48 8b c4 48 89 58 08 48 89 70 10 48 89 78 18 55 41 54 41 55 41 56 41 57 48 8d ?? ?? ?? ?? ?? 48 81 ?? 00 02 00 00"); // TODO
+        if (ShadowSoftPtr != 0)
+        {
+            ShadowSofteningInitHook = Service.GameInteropProvider.HookFromAddress<Unk_ShadowSofteningInitDelegate>(ShadowSoftPtr, ShadowSofteningInit);
+            ShadowSofteningInitHook.Enable();
+        }*/
 
         CascadeOverrideEnabled = true;
         Service.Logger.Verbose($"CascadeOverrideEnabled: {CascadeOverrideEnabled}");
@@ -347,6 +421,11 @@ internal static class CodeManager {
                 }
             }
         }
+
+        /*if (ShadowSofteningInitHook != null) {
+            ShadowSofteningInitHook.Disable();
+            ShadowSofteningInitHook.Dispose();
+        }*/
 
         CascadeOverrideEnabled = false;
         Service.Logger.Verbose($"CascadeOverrideEnabled: {CascadeOverrideEnabled}");

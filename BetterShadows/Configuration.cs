@@ -120,6 +120,7 @@ public class Configuration : IPluginConfiguration {
 
     #region Debug
     public bool Debug = false;
+    public bool SuperDebug = false;
 
     public int ForceMapX = 0;
     public int ForceMapY = 0;
@@ -144,6 +145,7 @@ public class Configuration : IPluginConfiguration {
     public bool ShowContinent = true;
     public bool OpenInGPose = true;
     public bool MaintainGameAspect = true;
+    public bool DynamicCascadeMode = true;
     #endregion
 
     public string lastSelectedPreset = "";
