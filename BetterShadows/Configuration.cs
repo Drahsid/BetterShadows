@@ -136,6 +136,7 @@ public class Configuration : IPluginConfiguration {
     public ShadowmapResolution[] ShadowMapNearSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
     public ShadowmapResolution[] ShadowMapFarSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
     public ShadowmapResolution[] ShadowMapDistanceSettings = { ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_NONE, ShadowmapResolution.RES_4096 };
+    public ShadowmapResolution ShadowMapCombatOverride = ShadowmapResolution.RES_2048;
     public float SliderMax = 9000.0f;
     public bool Enabled = true;
     public bool EnabledOverall = true;

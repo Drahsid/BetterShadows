@@ -2,10 +2,11 @@
 using System.Runtime.InteropServices;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using DrahsidLib;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 
 namespace BetterShadows;
 
-    [StructLayout(LayoutKind.Explicit, Size = 0x4C8)]
+[StructLayout(LayoutKind.Explicit, Size = 0x4C8)]
 public unsafe partial struct RenderTargetManagerUpdated {
     [FieldOffset(0x120)] public Texture* ShadowMapTexture0;
     [FieldOffset(0x128)] public Texture* ShadowMapTexture1;
@@ -63,6 +64,10 @@ public unsafe partial struct RenderTargetManagerUpdated {
         int* width_height = (int*)(&_width_height);
         _width_height.Width = sizeX;
         _width_height.Height = sizeY;
+
+        // ensure we don't free the combat map
+        CombatShadowmap.InitializedFrames = 2;
+        CombatShadowmap.SetCombat(false);
 
         if (thisx->ShadowMap_Width != sizeX || thisx->ShadowMap_Height != sizeY)
         {
@@ -126,12 +131,13 @@ public unsafe partial struct RenderTargetManagerUpdated {
                 return 0;
             }
 
-            thisx->ShadowMapTexture0 = texture0;
-            thisx->ShadowMapTexture1 = texture1;
-            thisx->ShadowMapTexture2 = texture2;
-            thisx->ShadowMapTexture3 = texture3;
+            thisx->ShadowMapTexture0 = CombatShadowmap.ShadowMapTexture0 = texture0;
+            thisx->ShadowMapTexture1 = CombatShadowmap.ShadowMapTexture1 = texture1;
+            thisx->ShadowMapTexture2 = CombatShadowmap.ShadowMapTexture2 = texture2;
+            thisx->ShadowMapTexture3 = CombatShadowmap.ShadowMapTexture3 = texture3;
             thisx->ShadowMap_Width = sizeX;
             thisx->ShadowMap_Height = sizeY;
+            CombatShadowmap.SetOriginalTextureSize(sizeX, sizeY);
             return 1;
         }
 

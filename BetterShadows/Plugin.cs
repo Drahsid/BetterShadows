@@ -1,6 +1,8 @@
-﻿using Dalamud.Plugin;
+﻿using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using DrahsidLib;
+using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using System;
 
 
@@ -28,6 +30,11 @@ public class Plugin : IDalamudPlugin {
         InitializeCommands();
         InitializeConfig();
         InitializeUI();
+
+        if (Globals.Config.ShadowMapCombatOverride != ShadowmapResolution.RES_NONE)
+        {
+            CombatShadowmap.SetCombatTextureSize(Globals.Config.ShadowMapCombatOverride);
+        }
 
         Globals.DtrDisplay = new DtrDisplay();
     }
@@ -66,6 +73,20 @@ public class Plugin : IDalamudPlugin {
                     CodeManager.ReinitializeShadowMap();
                     LastSoftSetting = shadows->ShadowSofteningSetting;
                 }
+            }
+
+            if (Globals.Config.ShadowMapCombatOverride != ShadowmapResolution.RES_NONE)
+            {
+                var rtm = (RenderTargetManagerUpdated*)RenderTargetManager.Instance();
+                if (rtm != null)
+                {
+                    bool combat_flag = Service.Condition[ConditionFlag.InCombat];
+                    CombatShadowmap.SetCombat(combat_flag);
+                }
+            }
+            else if (CombatShadowmap.CombatMode)
+            {
+                CombatShadowmap.Dispose();
             }
         }
 
@@ -106,6 +127,8 @@ public class Plugin : IDalamudPlugin {
         if (CodeManager.ShadowMapOverrideEnabled) {
             CodeManager.DisableShadowMapOverride();
         }
+
+        CombatShadowmap.Dispose();
     }
 
     public void Dispose() {

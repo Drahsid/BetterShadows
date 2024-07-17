@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 namespace BetterShadows;
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct SizeParam {
+public struct SizeParam {
     public int Width;
     public int Height;
 }
@@ -314,14 +314,14 @@ internal static class CodeManager {
         UInt64 size = (UInt64)rtm->ShadowMap_Width * (UInt64)rtm->ShadowMap_Height;
         if (size > sizeDefault)
         {
-            float _ratio = size / sizeDefault;
-            float ratio = MathF.Max(1.0f, _ratio / 4);
+            float _ratio = MathF.Log(size / sizeDefault, 2);
+            float ratio = MathF.Max(1.0f, 1.0f + 0.5f * Math.Clamp(_ratio, 0, 3));
             thisx->CascadeDistance0 *= ratio;
             thisx->CascadeDistance1 *= ratio;
             thisx->CascadeDistance2 *= ratio;
             thisx->CascadeDistance3 *= ratio;
             thisx->CascadeDistance4 *= ratio;
-            thisx->ShadowapBlending = 3 * MathF.Max(1.0f, _ratio / 6);
+            thisx->ShadowapBlending = 3 * MathF.Max(1.0f, _ratio / 2);
         }
     }
 

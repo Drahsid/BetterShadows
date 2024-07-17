@@ -114,6 +114,31 @@ public class ConfigWindow : WindowWrapper {
             ImGui.EndCombo();
         }
         ConfigWindowHelpers.DrawTooltip("Override the resolution of the 'Low' shadow resolution setting");
+
+        if (ImGui.BeginCombo("Shadow Map Combat Override", Globals.Config.ShadowMapCombatOverride.ToString()))
+        {
+            for (int index = 0; index < (int)ShadowmapResolution.RES_COUNT; index++)
+            {
+                ShadowmapResolution rez = (ShadowmapResolution)index;
+                if (ImGui.Selectable(rez.ToString(), Globals.Config.ShadowMapCombatOverride == rez))
+                {
+                    Globals.Config.ShadowMapCombatOverride = rez;
+                    if (CodeManager.ShadowMapOverrideEnabled)
+                    {
+                        if (rez == ShadowmapResolution.RES_NONE)
+                        {
+                            CombatShadowmap.Dispose();
+                        }
+                        else
+                        {
+                            CombatShadowmap.SetCombatTextureSize(rez);
+                        }
+                    }
+                }
+            }
+            ImGui.EndCombo();
+        }
+        ConfigWindowHelpers.DrawTooltip("Override the resolution of global shadows while in combat. Settings other than NONE have a slight vram cost, with potentially beneficial performance during combat.");
     }
 
     private unsafe void DrawNearShadowmapSetting()
@@ -372,6 +397,10 @@ public class ConfigWindow : WindowWrapper {
             if (WindowDrawHelpers.DrawCheckboxTooltip("Try to maintain shadow resolution aspect ratio", ref Globals.Config.MaintainGameAspect, "Tries to maintain the shadowmap resolution aspect ratios naturally seen in the game, as opposed to using a square shadowmap.\nThis will make lower resolution options look better since it may increase the shadowmap sizes,\nwhile having no effect on options higher than 2048 for Global shaodws, and 8192 for Near shadows."))
             {
                 CodeManager.ReinitializeShadowMap();
+                if (Globals.Config.ShadowMapCombatOverride != ShadowmapResolution.RES_NONE)
+                {
+                    CombatShadowmap.SetCombatTextureSize(Globals.Config.ShadowMapCombatOverride);
+                }
             }
 
             if (ImGui.TreeNode("Global Sun Shadow Map Settings"))
