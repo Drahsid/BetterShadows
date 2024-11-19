@@ -1,5 +1,5 @@
 ﻿using DrahsidLib;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System;
 using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -56,8 +56,8 @@ public unsafe class DtrDisplay : IDisposable {
             lastTerritory = Service.ClientState.TerritoryType;
             var territory = Service.DataManager.GetExcelSheet<TerritoryType>()!.GetRow(Service.ClientState.TerritoryType);
 
-            currentTerritory = territory?.PlaceName.Value;
-            currentContinent = territory?.PlaceNameRegion.Value;
+            currentTerritory = territory.PlaceName.Value;
+            currentContinent = territory.PlaceNameRegion.Value;
             locationChanged = true;
         }
     }

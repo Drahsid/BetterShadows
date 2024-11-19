@@ -259,22 +259,22 @@ internal static class CodeManager {
 
             if (Globals.DtrDisplay.currentContinent != null)
             {
-                continent = Globals.DtrDisplay.currentContinent.Name.RawString;
+                continent = Globals.DtrDisplay.currentContinent.Value.Name.ExtractText();
             }
 
             if (Globals.DtrDisplay.currentTerritory != null)
             {
-                territory = Globals.DtrDisplay.currentTerritory.Name.RawString;
+                territory = Globals.DtrDisplay.currentTerritory.Value.Name.ExtractText();
             }
 
             if (Globals.DtrDisplay.currentRegion != null)
             {
-                region = Globals.DtrDisplay.currentRegion.Name.RawString;
+                region = Globals.DtrDisplay.currentRegion.Value.Name.ExtractText();
             }
 
             if (Globals.DtrDisplay.currentSubArea != null)
             {
-                subArea = Globals.DtrDisplay.currentSubArea.Name.RawString;
+                subArea = Globals.DtrDisplay.currentSubArea.Value.Name.ExtractText();
             }
 
             Globals.Config.ApplyPresetByGuid(Globals.Config.GetZonePresetGUID(new string[] { continent, territory, region, subArea }));
