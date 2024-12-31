@@ -125,14 +125,15 @@ public class ConfigWindow : WindowWrapper {
                     Globals.Config.ShadowMapCombatOverride = rez;
                     if (CodeManager.ShadowMapOverrideEnabled)
                     {
-                        if (rez == ShadowmapResolution.RES_NONE)
+                        if (Globals.Config.ShadowMapCombatOverride != ShadowmapResolution.RES_NONE)
                         {
-                            CombatShadowmap.Dispose();
+                            ShadowmapOverlord.SetAllowCombat(true);
                         }
                         else
                         {
-                            CombatShadowmap.SetCombatTextureSize(rez);
+                            ShadowmapOverlord.SetAllowCombat(false);
                         }
+                        CodeManager.ReinitializeShadowMap();
                     }
                 }
             }
@@ -397,10 +398,6 @@ public class ConfigWindow : WindowWrapper {
             if (WindowDrawHelpers.DrawCheckboxTooltip("Try to maintain shadow resolution aspect ratio", ref Globals.Config.MaintainGameAspect, "Tries to maintain the shadowmap resolution aspect ratios naturally seen in the game, as opposed to using a square shadowmap.\nThis will make lower resolution options look better since it may increase the shadowmap sizes,\nwhile having no effect on options higher than 2048 for Global shaodws, and 8192 for Near shadows."))
             {
                 CodeManager.ReinitializeShadowMap();
-                if (Globals.Config.ShadowMapCombatOverride != ShadowmapResolution.RES_NONE)
-                {
-                    CombatShadowmap.SetCombatTextureSize(Globals.Config.ShadowMapCombatOverride);
-                }
             }
 
             if (ImGui.TreeNode("Global Sun Shadow Map Settings"))

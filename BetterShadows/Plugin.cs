@@ -31,11 +31,6 @@ public class Plugin : IDalamudPlugin {
         InitializeConfig();
         InitializeUI();
 
-        if (Globals.Config.ShadowMapCombatOverride != ShadowmapResolution.RES_NONE)
-        {
-            CombatShadowmap.SetCombatTextureSize(Globals.Config.ShadowMapCombatOverride);
-        }
-
         Globals.DtrDisplay = new DtrDisplay();
     }
 
@@ -81,12 +76,8 @@ public class Plugin : IDalamudPlugin {
                 if (rtm != null)
                 {
                     bool combat_flag = Service.Condition[ConditionFlag.InCombat];
-                    CombatShadowmap.SetCombat(combat_flag);
+                    ShadowmapOverlord.SetCombat(combat_flag);
                 }
-            }
-            else if (CombatShadowmap.CombatMode)
-            {
-                CombatShadowmap.Dispose();
             }
         }
 
@@ -120,6 +111,8 @@ public class Plugin : IDalamudPlugin {
 
         Commands.Dispose();
 
+        ShadowmapOverlord.Dispose();
+
         if (CodeManager.CascadeOverrideEnabled) {
             CodeManager.DisableShadowCascadeOverride();
         }
@@ -127,8 +120,6 @@ public class Plugin : IDalamudPlugin {
         if (CodeManager.ShadowMapOverrideEnabled) {
             CodeManager.DisableShadowMapOverride();
         }
-
-        CombatShadowmap.Dispose();
     }
 
     public void Dispose() {

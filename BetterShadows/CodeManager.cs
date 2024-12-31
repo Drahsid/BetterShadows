@@ -3,6 +3,8 @@ using DrahsidLib;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using System;
 using System.Runtime.InteropServices;
+using static FFXIVClientStructs.FFXIV.Client.System.String.Utf8String.Delegates;
+using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace BetterShadows;
 
@@ -42,14 +44,14 @@ internal static class CodeManager {
 
 
     [return: MarshalAs(UnmanagedType.U1)]
-    private unsafe delegate byte RenderTargetManager_InitializeShadowmapDelegate(RenderTargetManagerUpdated* thisx, SizeParam* size);
+    public unsafe delegate byte RenderTargetManager_InitializeShadowmapDelegate(RenderTargetManagerUpdated* thisx, SizeParam* size);
 
     private unsafe delegate void ShadowManager_UpdateCascadeValuesDelegate(ShadowManager* thisx, float unk1);
 
     private unsafe delegate void Unk_ShadowSofteningInitDelegate(IntPtr unk1, IntPtr unk2);
 
-    private static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowMapHook { get; set; } = null!;
-    private static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowMapNearFarHook { get; set; } = null!;
+    public static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowMapHook { get; set; } = null!;
+    public static Hook<RenderTargetManager_InitializeShadowmapDelegate>? InitializeShadowMapNearFarHook { get; set; } = null!;
 
     private static Hook<ShadowManager_UpdateCascadeValuesDelegate>? UpdateCascadeValuesHook { get; set; } = null!;
     private static Hook<Unk_ShadowSofteningInitDelegate>? ShadowSofteningInitHook { get; set; } = null!;
@@ -124,33 +126,49 @@ internal static class CodeManager {
         int width = sizeXY.Width;
         int height = sizeXY.Height;
 
-        if (Globals.Config.MaintainGameAspect)
-        {
-            height = Math.Min(16384, width * 5);
-        }
-
-        // if debug and axis != 0
-        if (Globals.Config.Debug)
-        {
-            if (Globals.Config.ForceMapX != 0)
-            {
-                width = Globals.Config.ForceMapX;
-            }
-
-            if (Globals.Config.ForceMapY != 0)
-            {
-                height = Globals.Config.ForceMapY;
-            }
-        }
+        SizeParam _combat = GetShadowmapSettingSize(Globals.Config.ShadowMapCombatOverride, _size);
+        int combat_width = _combat.Width;
+        int combat_height = _combat.Height;
 
         // Fix strange behavior with strongest shadow softening by forcing the 1:5 shadowmap ratio
         if (ShadowManager->ShadowSofteningSetting == 3)
         {
-            width = Math.Min(512 * 6, width);
-            height = Math.Min(512 * 6 * 5, height);
+            width = height = Math.Min(3276, width);
+            height *= 5;
+
+            combat_width = combat_height = Math.Min(3276, combat_width);
+            combat_height *= 5;
+        }
+        else if (Globals.Config.MaintainGameAspect)
+        {
+            height *= 5;
+            combat_height *= 5;
         }
 
-        if (RenderTargetManagerUpdated.InitializeShadowmap(thisx, width, height) != 0)
+        if (Globals.Config.ForceMapX != 0)
+        {
+            width = Globals.Config.ForceMapX;
+        }
+
+        if (Globals.Config.ForceMapY != 0)
+        {
+            height = Globals.Config.ForceMapY;
+        }
+
+        width = Math.Max(0, Math.Min(16384, width));
+        height = Math.Max(0, Math.Min(16384, height));
+
+        combat_width = Math.Max(0, Math.Min(16384, combat_width));
+        combat_height = Math.Max(0, Math.Min(16384, combat_height));
+
+        if (ShadowmapOverlord.OverlordInitialized0 == false)
+        {
+            ShadowmapOverlord.OverlordInitializeGlobal(width / 2, height / 2);
+            InitializeShadowmapNearFar(thisx, _size); // make sure overlord gets fully initialized
+        }
+
+        ShadowmapOverlord.WasInCombat = false;
+        if (ShadowmapOverlord.SetGlobalTextureSize(width, height, combat_width, combat_height, Globals.Config.ShadowMapCombatOverride != ShadowmapResolution.RES_NONE))
         {
             thisx->ShadowMap_Width = width;
             thisx->ShadowMap_Height = height;
@@ -160,7 +178,7 @@ internal static class CodeManager {
         }
         else
         {
-            Service.Logger.Error("InitializeShadowmap failed?");
+            Service.Logger.Error("global failed?");
             var ret = InitializeShadowMapHook.Original(thisx, _size);
             LastShadowmapWidth = rtm->ShadowMap_Width;
             LastShadowmapHeight = rtm->ShadowMap_Height;
@@ -168,11 +186,21 @@ internal static class CodeManager {
         }
     }
 
-    private static unsafe byte InitializeShadowmapNearFar(RenderTargetManagerUpdated* thisx, SizeParam* _size) {
+    private static unsafe byte InitializeShadowmapNearFar(RenderTargetManagerUpdated* thisx, SizeParam* _size)
+    {
         var option = ShadowManager->ShadowmapOption;
         SizeParam size_near = GetShadowmapSettingSize(Globals.Config.ShadowMapNearSettings[option], _size);
         SizeParam size_far = GetShadowmapSettingSize(Globals.Config.ShadowMapFarSettings[option], _size);
         SizeParam size_dist = GetShadowmapSettingSize(Globals.Config.ShadowMapDistanceSettings[option], _size);
+
+        SizeParam size_global = GetShadowmapSettingSize(Globals.Config.ShadowMapGlobalSettings[option], _size);
+        SizeParam _combat = GetShadowmapSettingSize(Globals.Config.ShadowMapCombatOverride, _size);
+        int combat_nwidth = _combat.Width;
+        int combat_nheight = _combat.Height;
+        int combat_fwidth = _combat.Width;
+        int combat_fheight = _combat.Height;
+        int combat_dwidth = _combat.Width;
+        int combat_dheight = _combat.Height;
 
         int width_near = size_near.Width;
         int height_near = size_near.Height;
@@ -185,9 +213,35 @@ internal static class CodeManager {
 
         if (Globals.Config.MaintainGameAspect)
         {
-            width_near = Math.Min(16384, width_near * 2);
-            height_near = Math.Min(16384, height_near * 2);
-            width_dist = Math.Min(16384, width_dist * 4);
+            width_near *= 2;
+            height_near *= 2;
+            width_dist *= 4;
+
+            combat_nwidth *= 2;
+            combat_nheight *= 2;
+            combat_dwidth *= 4;
+        }
+
+        width_near = Math.Max(0, Math.Min(16384, width_near));
+        height_near = Math.Max(0, Math.Min(16384, height_near));
+
+        width_far = Math.Max(0, Math.Min(16384, width_far));
+        height_far = Math.Max(0, Math.Min(16384, height_far));
+
+        width_dist = Math.Max(0, Math.Min(16384, width_dist));
+        height_dist = Math.Max(0, Math.Min(16384, height_dist));
+
+        combat_nwidth = Math.Max(0, Math.Min(16384, combat_nwidth));
+        combat_nheight = Math.Max(0, Math.Min(16384, combat_nheight));
+        combat_fwidth = Math.Max(0, Math.Min(16384, combat_fwidth));
+        combat_fheight = Math.Max(0, Math.Min(16384, combat_fheight));
+        combat_dwidth = Math.Max(0, Math.Min(16384, combat_dwidth));
+        combat_dheight = Math.Max(0, Math.Min(16384, combat_dheight));
+
+        if (Globals.Config.MaintainGameAspect)
+        {
+            height_dist = Math.Max(0, Math.Min(4096, height_dist));
+            combat_dheight = Math.Max(0, Math.Min(4096, combat_dheight));
         }
 
         if (Globals.Config.Debug)
@@ -223,21 +277,18 @@ internal static class CodeManager {
             }
         }
 
-        byte near = RenderTargetManagerUpdated.InitializeNearShadowmap(thisx, width_near, height_near);
-        byte far = RenderTargetManagerUpdated.InitializeFarShadowmap(thisx, width_far, height_far);
-        byte dist = RenderTargetManagerUpdated.InitializeDistanceShadowmap(thisx, width_dist, height_dist);
-
-        if (near != 0 && far != 0 && dist != 0)
+        if (ShadowmapOverlord.OverlordInitialized1 == false)
         {
-            thisx->NearShadowMap_Width = width_near;
-            thisx->NearShadowMap_Height = height_near;
+            ShadowmapOverlord.OverlordInitializeNFD(width_near / 2, height_near / 2, width_far / 2, height_far / 2, width_dist / 2, height_dist / 2);
+        }
 
-            thisx->FarShadowMap_Width = width_far;
-            thisx->FarShadowMap_Height = height_far;
+        ShadowmapOverlord.WasInCombat = false;
 
-            thisx->DistanceShadowMap_Width = width_dist;
-            thisx->DistanceShadowMap_Height = height_dist;
-
+        bool near = ShadowmapOverlord.SetNearTextureSize(width_near, height_near, combat_nwidth, combat_nheight);
+        bool far = ShadowmapOverlord.SetFarTextureSize(width_far, height_far, combat_fwidth, combat_fheight);
+        bool dist = ShadowmapOverlord.SetDistanceTextureSize(width_dist, height_dist, combat_dwidth, combat_dheight);
+        if (near && far && dist)
+        {
             return 1;
         }
         else
@@ -386,7 +437,7 @@ internal static class CodeManager {
 
         // 48 89 5c 24 10 48 89 74 24 18 57 41 56 41 57 48 83 ec 30 48 8b 02 48 8b fa 48 89 81 ?? ?? 00 00
         var InitializeShadowMapHookPtr0 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 0f 84 ?? 00 00 00 8b 4f");
-        var InitializeShadowMapHookPtr1 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 74 53 33 d2 48 8d 8f");
+        var InitializeShadowMapHookPtr1 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 74 ?? 33 d2 48 8d 8f");
         var aaa = Service.SigScanner.ScanText("4c 8b d9 0f b6 d2 49 b9 01 01 01 01 01 01 01 01");
 
         if (InitializeShadowMapHookPtr0 != IntPtr.Zero) {
