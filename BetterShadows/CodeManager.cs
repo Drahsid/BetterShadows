@@ -412,10 +412,10 @@ internal static class CodeManager {
             return;
         }
 
-        var ShadowCascadePtr = Service.SigScanner.ScanText("e8 ?? ?? ?? ?? 48 8b ?? ?? ?? ?? ?? 0f 28 d6 48 8b d3 e8 ?? ?? ?? ?? 0f");
+        var ShadowCascadePtr = Service.SigScanner.ScanText("0f 28 ce e8 ?? ?? ?? ?? 48 8b ?? ?? ?? ?? ?? 0f 28 d6 48 8b d3 e8 ?? ?? ?? ?? 48 8b");
         if (ShadowCascadePtr != IntPtr.Zero)
         {
-            UpdateCascadeValuesHook = Service.GameInteropProvider.HookFromAddress<ShadowManager_UpdateCascadeValuesDelegate>(ShadowCascadePtr, UpdateCascadeValues);
+            UpdateCascadeValuesHook = Service.GameInteropProvider.HookFromAddress<ShadowManager_UpdateCascadeValuesDelegate>(ShadowCascadePtr + 3, UpdateCascadeValues);
             UpdateCascadeValuesHook.Enable();
         }
 

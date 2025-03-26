@@ -10,8 +10,8 @@ public unsafe struct ShadowmapPointer
 {
     public Texture* ShadowMapTexture;
     public Texture* ShadowMapTexture_Combat;
-    public uint TextureFormat;
-    public uint Flags;
+    public TextureFormat TextureFormat;
+    public TextureFlags Flags;
 }
 
 public unsafe class ShadowmapGroup
@@ -53,8 +53,8 @@ public unsafe class ShadowmapGroup
         {
             Shadowmaps[index].ShadowMapTexture = (Texture*)IntPtr.Zero;
             Shadowmaps[index].ShadowMapTexture_Combat = (Texture*)IntPtr.Zero;
-            Shadowmaps[index].TextureFormat = 0x5100;
-            Shadowmaps[index].Flags = 0x100000;
+            Shadowmaps[index].TextureFormat = (TextureFormat)0x5100;
+            Shadowmaps[index].Flags = TextureFlags.TextureRenderTarget;
         }
 
         Tag = tag;
@@ -467,10 +467,10 @@ public static class ShadowmapOverlord
 
         if (GlobalShadowmaps.Shadowmaps != null)
         {
-            GlobalShadowmaps.Shadowmaps[1].TextureFormat = 0x5140;
-            GlobalShadowmaps.Shadowmaps[1].Flags = 0x200000;
-            GlobalShadowmaps.Shadowmaps[3].TextureFormat = 0x5140;
-            GlobalShadowmaps.Shadowmaps[3].Flags = 0x200000;
+            GlobalShadowmaps.Shadowmaps[1].TextureFormat = (TextureFormat)0x5140;
+            GlobalShadowmaps.Shadowmaps[1].Flags = TextureFlags.TextureDepthStencil;
+            GlobalShadowmaps.Shadowmaps[3].TextureFormat = (TextureFormat)0x5140;
+            GlobalShadowmaps.Shadowmaps[3].Flags = TextureFlags.TextureDepthStencil;
         }
 
         unsafe
@@ -502,8 +502,8 @@ public static class ShadowmapOverlord
         {
             for (int index = 1; index < NearShadowmaps.Shadowmaps.Length; index++)
             {
-                NearShadowmaps.Shadowmaps[index].TextureFormat = 0x5140;
-                NearShadowmaps.Shadowmaps[index].Flags = 0x200000;
+                NearShadowmaps.Shadowmaps[index].TextureFormat = (TextureFormat)0x5140;
+                NearShadowmaps.Shadowmaps[index].Flags = TextureFlags.TextureDepthStencil;
             }
         }
 
@@ -515,8 +515,8 @@ public static class ShadowmapOverlord
         {
             for (int index = 1; index < FarShadowmaps.Shadowmaps.Length; index++)
             {
-                FarShadowmaps.Shadowmaps[index].TextureFormat = 0x5140;
-                FarShadowmaps.Shadowmaps[index].Flags = 0x200000;
+                FarShadowmaps.Shadowmaps[index].TextureFormat = (TextureFormat)0x5140;
+                FarShadowmaps.Shadowmaps[index].Flags = TextureFlags.TextureDepthStencil;
             }
         }
 
@@ -528,8 +528,8 @@ public static class ShadowmapOverlord
         {
             for (int index = 1; index < DistanceShadowmaps.Shadowmaps.Length; index++)
             {
-                DistanceShadowmaps.Shadowmaps[index].TextureFormat = 0x5140;
-                DistanceShadowmaps.Shadowmaps[index].Flags = 0x200000;
+                DistanceShadowmaps.Shadowmaps[index].TextureFormat = (TextureFormat)0x5140;
+                DistanceShadowmaps.Shadowmaps[index].Flags = TextureFlags.TextureDepthStencil;
             }
         }
 
