@@ -42,8 +42,8 @@ public unsafe class DtrDisplay : IDisposable {
 
         // attempt to eliminate bogus entries
         var house = HousingManager.Instance();
-
-        if (house->GetCurrentIndoorHouseId() != -1 || house->GetCurrentPlot() != -1 || house->GetCurrentWard() != -1) {
+        if (house->GetCurrentIndoorHouseId().Id != ulong.MaxValue || house->GetCurrentPlot() != -1 || house->GetCurrentWard() != -1)
+        {
             currentRegion = null;
             currentSubArea = null;
         }

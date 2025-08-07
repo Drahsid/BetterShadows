@@ -35,6 +35,8 @@ public unsafe class ShadowmapGroup
     public string Tag = "";
     public Texture** TexturePointer;
 
+    private const int SAFETY_FRAMES = 4;
+
     public ShadowmapGroup(int count, string tag, MapGroup group)
     {
         Allocated = false;
@@ -97,6 +99,7 @@ public unsafe class ShadowmapGroup
 
         for (int index = 0; index < Count; index++)
         {
+            Service.Logger.Verbose($"[{index}] CreateTexture2D: {width_height[0]}, {width_height[1]}, 1, {Shadowmaps[index].TextureFormat:X}, {Shadowmaps[index].Flags:X}, 3");
             textures[index] = Device.Instance()->CreateTexture2D(width_height, 1, Shadowmaps[index].TextureFormat, Shadowmaps[index].Flags, 3);
             if (textures[index] == null)
             {
@@ -140,13 +143,16 @@ public unsafe class ShadowmapGroup
         }
 
         if (error) {
+            Service.Logger.Verbose("There was an error...");
             for (int index = 0; index < Count; index++)
             {
+                Service.Logger.Verbose($"[${index}] Attempting to erase texture...");
                 if (textures[index] != null)
                 {
                     textures[index]->DecRef();
                 }
 
+                Service.Logger.Verbose($"[${index}, combat] Attempting to erase texture...");
                 if (textures_combat[index] != null)
                 {
                     textures_combat[index]->DecRef();
@@ -158,12 +164,15 @@ public unsafe class ShadowmapGroup
 
         for (int index = 0; index < Count; index++)
         {
+            Service.Logger.Verbose($"[${index}] Attempting to erase texture...");
             if (TexturePointer[index] != null)
             {
                 TexturePointer[index]->DecRef();
             }
 
+            Service.Logger.Verbose("Setting texture pointer");
             TexturePointer[index] = textures[index];
+            Service.Logger.Verbose("Setting ShadowMapTexture");
             Shadowmaps[index].ShadowMapTexture = textures[index];
 
             if (EnableCombat)
@@ -182,6 +191,7 @@ public unsafe class ShadowmapGroup
             rez = WidthHeight_Combat;
         }
 
+        Service.Logger.Verbose("Setting rez");
         switch (Group)
         {
             default:
@@ -203,7 +213,7 @@ public unsafe class ShadowmapGroup
                 break;
         }
 
-        ShadowmapOverlord.InitializedFrames = 2;
+        ShadowmapOverlord.InitializedFrames = SAFETY_FRAMES;
         UsingBaseTextures = true;
         Allocated = true;
 
@@ -304,7 +314,7 @@ public unsafe class ShadowmapGroup
             }
         }
 
-        ShadowmapOverlord.InitializedFrames = 2;
+        ShadowmapOverlord.InitializedFrames = SAFETY_FRAMES;
         Allocated = false;
     }
 
@@ -366,7 +376,7 @@ public unsafe class ShadowmapGroup
                 break;
         }
 
-        ShadowmapOverlord.InitializedFrames = 2;
+        ShadowmapOverlord.InitializedFrames = SAFETY_FRAMES;
         UsingBaseTextures = false;
 
         return true;
@@ -431,7 +441,7 @@ public unsafe class ShadowmapGroup
                 break;
         }
 
-        ShadowmapOverlord.InitializedFrames = 2;
+        ShadowmapOverlord.InitializedFrames = SAFETY_FRAMES;
         UsingBaseTextures = true;
 
         return true;
@@ -584,7 +594,8 @@ public static class ShadowmapOverlord
     public static bool SetNearTextureSize(int width, int height, int widthc, int heightc)
     {
         if (OverlordInitialized == false) { return false; }
-
+        Service.Logger.Verbose("Overlord is Initialized");
+        
         bool changed = false;
         if (NearShadowmaps.WidthHeight.Width != width
             || NearShadowmaps.WidthHeight.Height != height
@@ -592,6 +603,7 @@ public static class ShadowmapOverlord
             || NearShadowmaps.WidthHeight_Combat.Height != heightc)
         {
             changed = true;
+            Service.Logger.Verbose("Change detected");
         }
 
         NearShadowmaps.WidthHeight.Width = width;
@@ -603,8 +615,11 @@ public static class ShadowmapOverlord
         {
             if (NearShadowmaps.Allocated)
             {
+                Service.Logger.Verbose("Unallocating textures...");
                 NearShadowmaps.UnallocateTextures(false);
+                Service.Logger.Verbose("Done");
             }
+            Service.Logger.Verbose("Allocating new textures...");
             return NearShadowmaps.AllocateTextures();
         }
 

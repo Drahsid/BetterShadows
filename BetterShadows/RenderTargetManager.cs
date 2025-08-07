@@ -6,8 +6,10 @@ using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 
 namespace BetterShadows;
 
-[StructLayout(LayoutKind.Explicit, Size = 0x4C8)]
+[StructLayout(LayoutKind.Explicit, Size = 0x730)]
 public unsafe partial struct RenderTargetManagerUpdated {
+    public static RenderTargetManagerUpdated* Instance() => (RenderTargetManagerUpdated*)FFXIVClientStructs.FFXIV.Client.Graphics.Render.RenderTargetManager.Instance();
+    
     [FieldOffset(0x120)] public Texture* ShadowMapTexture0;
     [FieldOffset(0x128)] public Texture* ShadowMapTexture1;
     [FieldOffset(0x130)] public Texture* ShadowMapTexture2;

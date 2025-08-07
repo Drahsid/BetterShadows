@@ -2,9 +2,8 @@
 using DrahsidLib;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
 using System;
+using System.ComponentModel.Design;
 using System.Runtime.InteropServices;
-using static FFXIVClientStructs.FFXIV.Client.System.String.Utf8String.Delegates;
-using static FFXIVClientStructs.FFXIV.Client.UI.Misc.GroupPoseModule;
 
 namespace BetterShadows;
 
@@ -168,6 +167,7 @@ internal static class CodeManager {
         }
 
         ShadowmapOverlord.WasInCombat = false;
+        Service.Logger.Verbose($"SetGlobalTextureSize: {width}, {height}; {combat_width}, {combat_height}; {Globals.Config.ShadowMapCombatOverride != ShadowmapResolution.RES_NONE}");
         if (ShadowmapOverlord.SetGlobalTextureSize(width, height, combat_width, combat_height, Globals.Config.ShadowMapCombatOverride != ShadowmapResolution.RES_NONE))
         {
             thisx->ShadowMap_Width = width;
@@ -283,9 +283,13 @@ internal static class CodeManager {
         }
 
         ShadowmapOverlord.WasInCombat = false;
-
+        Service.Logger.Verbose("Near");
         bool near = ShadowmapOverlord.SetNearTextureSize(width_near, height_near, combat_nwidth, combat_nheight);
+
+        Service.Logger.Verbose("Far");
         bool far = ShadowmapOverlord.SetFarTextureSize(width_far, height_far, combat_fwidth, combat_fheight);
+
+        Service.Logger.Verbose("Dist");
         bool dist = ShadowmapOverlord.SetDistanceTextureSize(width_dist, height_dist, combat_dwidth, combat_dheight);
         if (near && far && dist)
         {

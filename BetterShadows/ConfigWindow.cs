@@ -1,4 +1,4 @@
-﻿using ImGuiNET;
+﻿using Dalamud.Bindings.ImGui;
 using System.Numerics;
 using DrahsidLib;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
