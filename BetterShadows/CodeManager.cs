@@ -416,14 +416,18 @@ internal static class CodeManager {
             return;
         }
 
-        var ShadowCascadePtr = Service.SigScanner.ScanText("0f 28 ce e8 ?? ?? ?? ?? 48 8b ?? ?? ?? ?? ?? 0f 28 d6 48 8b d3 e8 ?? ?? ?? ?? 48 8b");
+        var ShadowCascadePtr = Service.SigScanner.ScanText("4C 8B DC 49 89 5B 10 49 89 73 18 55 57 41 56 49 8D 6B A1 48 81 EC");
         if (ShadowCascadePtr != IntPtr.Zero)
         {
-            UpdateCascadeValuesHook = Service.GameInteropProvider.HookFromAddress<ShadowManager_UpdateCascadeValuesDelegate>(ShadowCascadePtr + 3, UpdateCascadeValues);
+            UpdateCascadeValuesHook = Service.GameInteropProvider.HookFromAddress<ShadowManager_UpdateCascadeValuesDelegate>(ShadowCascadePtr, UpdateCascadeValues);
             UpdateCascadeValuesHook.Enable();
         }
+        else
+        {
+            Service.Logger.Error("Did not find UpdateCascadeValuesHook!");
+        }
 
-        /*var ShadowSoftPtr = Service.SigScanner.ScanText("48 8b c4 48 89 58 08 48 89 70 10 48 89 78 18 55 41 54 41 55 41 56 41 57 48 8d ?? ?? ?? ?? ?? 48 81 ?? 00 02 00 00"); // TODO
+        /*var ShadowSoftPtr = Service.SigScanner.ScanText("E8 ?? ?? ?? ?? 49 8B 04 ?? C7 44 24");
         if (ShadowSoftPtr != 0)
         {
             ShadowSofteningInitHook = Service.GameInteropProvider.HookFromAddress<Unk_ShadowSofteningInitDelegate>(ShadowSoftPtr, ShadowSofteningInit);
@@ -477,10 +481,10 @@ internal static class CodeManager {
             }
         }
 
-        /*if (ShadowSofteningInitHook != null) {
+        if (ShadowSofteningInitHook != null) {
             ShadowSofteningInitHook.Disable();
             ShadowSofteningInitHook.Dispose();
-        }*/
+        }
 
         CascadeOverrideEnabled = false;
         Service.Logger.Verbose($"CascadeOverrideEnabled: {CascadeOverrideEnabled}");
