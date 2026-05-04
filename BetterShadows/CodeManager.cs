@@ -444,8 +444,8 @@ internal static class CodeManager {
         }
 
         // 48 89 5c 24 10 48 89 74 24 18 57 41 56 41 57 48 83 ec 30 48 8b 02 48 8b fa 48 89 81 ?? ?? 00 00
-        var InitializeShadowMapHookPtr0 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 0f 84 ?? 00 00 00 8b 4f");
-        var InitializeShadowMapHookPtr1 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 74 ?? 33 d2 48 8d 8f");
+        var InitializeShadowMapHookPtr0 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 0f 84 ?? 00 00 00 41 8b 4d");
+        var InitializeShadowMapHookPtr1 = Service.SigScanner.ScanText("e8 ?? ?? ?? 00 84 c0 74 ?? 33 d2 49 8d 8d");
         var aaa = Service.SigScanner.ScanText("4c 8b d9 0f b6 d2 49 b9 01 01 01 01 01 01 01 01");
 
         if (InitializeShadowMapHookPtr0 != IntPtr.Zero) {
