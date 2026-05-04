@@ -34,7 +34,7 @@ public unsafe class DtrDisplay : IDisposable {
     }
 
     private void OnFrameworkUpdate(IFramework framework) {
-        if (Service.ClientState.LocalPlayer is null) return;
+        if (Service.ObjectTable.LocalPlayer is null) return;
 
         UpdateRegion();
         UpdateSubArea();
@@ -49,7 +49,7 @@ public unsafe class DtrDisplay : IDisposable {
         }
     }
 
-    private void OnZoneChange(ushort e) => locationChanged = true;
+    private void OnZoneChange(uint e) => locationChanged = true;
 
     private void UpdateTerritory() {
         if (lastTerritory != Service.ClientState.TerritoryType) {
